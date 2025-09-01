@@ -109,17 +109,26 @@ file(
   "win/tty/*.c"
   "win/rl/winrl.cc")
 
-# static version of bzip2 library
-add_library(
-  bz2_static STATIC
-  "third_party/bzip2/blocksort.c"
-  "third_party/bzip2/bzlib.c"
-  "third_party/bzip2/compress.c"
-  "third_party/bzip2/crctable.c"
-  "third_party/bzip2/decompress.c"
-  "third_party/bzip2/huffman.c"
-  "third_party/bzip2/randtable.c")
-target_link_libraries(bz2_static)
+# FetchContent for bzip2
+include(FetchContent)
+FetchContent_Declare(
+  bzip2
+  GIT_REPOSITORY git://sourceware.org/git/bzip2.git
+  GIT_TAG master)
+FetchContent_MakeAvailable(bzip2)
+
+# Manually add bzip2 source files from the downloaded directory
+set(BZIP2_SOURCE_DIR ${bzip2_SOURCE_DIR})
+set(BZIP2_SRC
+    ${BZIP2_SOURCE_DIR}/blocksort.c
+    ${BZIP2_SOURCE_DIR}/bzlib.c
+    ${BZIP2_SOURCE_DIR}/compress.c
+    ${BZIP2_SOURCE_DIR}/crctable.c
+    ${BZIP2_SOURCE_DIR}/decompress.c
+    ${BZIP2_SOURCE_DIR}/huffman.c
+    ${BZIP2_SOURCE_DIR}/randtable.c)
+add_library(bz2_static STATIC ${BZIP2_SRC})
+target_include_directories(bz2_static PUBLIC ${BZIP2_SOURCE_DIR})
 
 # terminal emulator library
 add_library(tmt STATIC "third_party/libtmt/tmt.c")
@@ -133,7 +142,7 @@ target_include_directories(
   nethack
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${NLE_INC_GEN} /usr/local/include
          ${CMAKE_CURRENT_SOURCE_DIR}/third_party/libtmt
-         ${CMAKE_CURRENT_SOURCE_DIR}/third_party/bzip2)
+         $<TARGET_PROPERTY:bz2_static,SOURCE_DIR>)
 # target_link_directories(nethack PUBLIC /usr/local/lib)
 
 # Careful with -DMONITOR_HEAP: Ironically, it fails to fclose FILE* heaplog.
@@ -177,7 +186,7 @@ target_include_directories(
   converter
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third_party/libtmt
          ${CMAKE_CURRENT_SOURCE_DIR}/third_party/converter
-         ${CMAKE_CURRENT_SOURCE_DIR}/third_party/bzip2)
+         $<TARGET_PROPERTY:bz2_static,SOURCE_DIR>)
 target_link_libraries(converter PUBLIC bz2_static tmt)
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   target_compile_options(converter PRIVATE -Wall -Wextra -pedantic -Werror)
