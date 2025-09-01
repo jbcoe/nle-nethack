@@ -53,7 +53,7 @@ message(STATUS "HACKDIR set to: ${HACKDIR}")
 set(VARDIR ${HACKDIR})
 set(INSTDIR ${HACKDIR})
 
-# --- pybind11 via FetchContent ---
+# pybind11 via FetchContent
 include(FetchContent)
 FetchContent_Declare(
   pybind11
@@ -61,6 +61,13 @@ FetchContent_Declare(
   GIT_TAG v3.0.1)
 FetchContent_MakeAvailable(pybind11)
 find_package(pybind11 CONFIG REQUIRED)
+
+# de-boost-ified version of boost.context via FetchContent
+FetchContent_Declare(
+  deboost_context
+  GIT_REPOSITORY https://github.com/septag/deboost.context.git
+  GIT_HASH "259fc4103bad6bb484d5ff426ace56ac557107a4")
+FetchContent_MakeAvailable(deboost_context)
 
 add_compile_definitions(
   GCC_WARN
@@ -87,9 +94,6 @@ set(NLE_DAT_GEN ${nle_BINARY_DIR}/dat)
 set(NLE_UTIL_GEN ${nle_BINARY_DIR}/util)
 
 set(CMAKE_INSTALL_MESSAGE LAZY) # Don't tell us about up-to-date files.
-
-# EXCLUDE_FROM_ALL: Don't install this static library into /usr/local.
-add_subdirectory(third_party/deboost.context EXCLUDE_FROM_ALL)
 add_subdirectory(util)
 add_subdirectory(dat)
 
@@ -140,9 +144,8 @@ target_link_libraries(nethack PUBLIC m fcontext bz2_static tmt)
 # dlopen wrapper library
 add_library(nethackdl STATIC "sys/unix/nledl.c")
 target_include_directories(
-  nethackdl
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
-         ${CMAKE_CURRENT_SOURCE_DIR}/third_party/deboost.context/include)
+  nethackdl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
+                   ${deboost_context_SOURCE_DIR}/include)
 target_link_libraries(nethackdl PUBLIC dl)
 
 # rlmain C++ (test) binary
