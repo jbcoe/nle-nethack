@@ -2,14 +2,25 @@
 name = "nle"
 description = "The NetHack Learning Environment (NLE): a reinforcement learning environment based on NetHack"
 readme = "README.md"
-authors = [ { name = "The NLE Dev Team" } ]
+authors = [{ name = "The NLE Dev Team" }]
 requires-python = ">=3.10"
-dynamic = ["classifiers", "version"]
-dependencies = [
-  "pybind11>=2.2",
-  "numpy>=1.16",
-  "gymnasium==1.2.0"
+dynamic = ["version"]
+classifiers = [
+  "License :: OSI Approved :: Nethack General Public License",
+  "Development Status :: 5 - Production/Stable",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: MacOS",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: C",
+  "Programming Language :: C++",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Games/Entertainment",
 ]
+dependencies = ["pybind11>=2.2", "numpy>=1.16", "gymnasium==1.2.0"]
 
 [project.license]
 file = "LICENSE"
@@ -18,19 +29,20 @@ file = "LICENSE"
 Homepage = "https://github.com/NetHack-LE/nle"
 
 [build-system]
-requires = ["setuptools", "pybind11>=2.2"]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core>=0.10", "pybind11>=2.2", "setuptools-scm"]
+build-backend = "scikit_build_core.build"
 
-[tool.setuptools.packages]
-find = { include = [
-    "nle",
-    "nle.dataset",
-    "nle.env",
-    "nle.nethack",
-    "nle.agent",
-    "nle.scripts",
-    "nle.tests"
-]}
+[tool.scikit-build]
+cmake.build-type = "Release"
+minimum-version = "build-system.requires"
+wheel.license-files = []
+cmake.args = ["-DHACKDIR=nle/nethackdir"]
+
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.setuptools_scm"
+
+[tool.setuptools_scm]
+# This section is necessary to activate setuptools-scm, but can be empty
 
 [project.scripts]
 nle-play = "nle.scripts.play:main"
@@ -54,9 +66,7 @@ dev = [
 ]
 
 [project.optional-dependencies]
-agent = [
-  "torch>=1.3.1"
-]
+agent = ["torch>=1.3.1"]
 all = [
   "pre-commit>=2.0.1",
   "isort>=5.13.2",
@@ -68,8 +78,9 @@ all = [
   "sphinx-rtd-theme>=0.4.3",
   "setuptools>=69.5.1",
   "ruff>=0.4.3",
-  "torch>=1.3.1"
+  "torch>=1.3.1",
 ]
+
 [tool.black]
 line-length = 88
 target-version = ['py38']
@@ -90,31 +101,18 @@ skip_glob = "**/__init__.py"
 
 [tool.ruff]
 # See https://docs.astral.sh/ruff/rules/.
-extend-exclude = [
-  "third_party",
-]
+extend-exclude = ["third_party"]
 exclude = ["win/rl/nle"]
+
 [tool.ruff.lint]
-ignore = [
-    "B008",
-    "B905",
-    "C901",
-    "E501",
-    "E731",
-]
-select = [
-    "B",
-    "B9",
-    "C",
-    "E",
-    "F",
-    "W",
-    "R",
-]
+ignore = ["B008", "B905", "C901", "E501", "E731"]
+select = ["B", "B9", "C", "E", "F", "W", "R"]
+
 [tool.ruff.lint.flake8-comprehensions]
 allow-dict-calls-with-keyword-arguments = true
+
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]  # unused-import.
+"__init__.py" = ["F401"] # unused-import.
 
 [tool.cibuildwheel]
 # We need to build wheels for the following Python versions:
