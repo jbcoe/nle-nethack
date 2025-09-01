@@ -53,6 +53,15 @@ message(STATUS "HACKDIR set to: ${HACKDIR}")
 set(VARDIR ${HACKDIR})
 set(INSTDIR ${HACKDIR})
 
+# --- pybind11 via FetchContent ---
+include(FetchContent)
+FetchContent_Declare(
+  pybind11
+  GIT_REPOSITORY https://github.com/pybind/pybind11.git
+  GIT_TAG v3.0.1)
+FetchContent_MakeAvailable(pybind11)
+find_package(pybind11 CONFIG REQUIRED)
+
 add_compile_definitions(
   GCC_WARN
   NOCLIPPING
@@ -144,7 +153,6 @@ target_include_directories(rlmain PUBLIC ${NLE_INC_GEN})
 add_dependencies(rlmain util) # For pm.h.
 
 # pybind11 core python library.
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/pybind11)
 pybind11_add_module(
   _pynethack
   win/rl/pynethack.cc
