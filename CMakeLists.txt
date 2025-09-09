@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 file(STRINGS "version.txt" NLE_VERSION)
 project(nle VERSION ${NLE_VERSION})
+cmake_policy(SET CMP0148 OLD)
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   message("Debug build.")
