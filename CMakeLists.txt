@@ -46,6 +46,16 @@ message(STATUS "HACKDIR set to: ${HACKDIR}")
 set(VARDIR ${HACKDIR})
 set(INSTDIR ${HACKDIR})
 
+add_compile_definitions(
+  GCC_WARN
+  NOCLIPPING
+  NOMAIL
+  NOTPARMDECL
+  HACKDIR="${HACKDIR}"
+  DEFAULT_WINDOW_SYS="rl"
+  DLB
+  NOCWD_ASSUMPTIONS)
+
 # pybind11 via FetchContent
 include(FetchContent)
 FetchContent_Declare(
@@ -61,16 +71,6 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/septag/deboost.context.git
   GIT_HASH "259fc4103bad6bb484d5ff426ace56ac557107a4")
 FetchContent_MakeAvailable(deboost_context)
-
-add_compile_definitions(
-  GCC_WARN
-  NOCLIPPING
-  NOMAIL
-  NOTPARMDECL
-  HACKDIR="${HACKDIR}"
-  DEFAULT_WINDOW_SYS="rl"
-  DLB
-  NOCWD_ASSUMPTIONS)
 
 option(USE_SEEDING "Use seeding support in NLE" ON)
 
