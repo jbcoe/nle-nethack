@@ -47,6 +47,22 @@ message(STATUS "HACKDIR set to: ${HACKDIR}")
 set(VARDIR ${HACKDIR})
 set(INSTDIR ${HACKDIR})
 
+# pybind11 via FetchContent
+include(FetchContent)
+FetchContent_Declare(
+  pybind11
+  GIT_REPOSITORY https://github.com/pybind/pybind11.git
+  GIT_TAG v3.0.1)
+FetchContent_MakeAvailable(pybind11)
+find_package(pybind11 CONFIG REQUIRED)
+
+# de-boost-ified version of boost.context via FetchContent
+FetchContent_Declare(
+  deboost_context
+  GIT_REPOSITORY https://github.com/septag/deboost.context.git
+  GIT_HASH "259fc4103bad6bb484d5ff426ace56ac557107a4")
+FetchContent_MakeAvailable(deboost_context)
+
 add_compile_definitions(
   GCC_WARN
   NOCLIPPING
@@ -80,7 +96,6 @@ set(NLE_UTIL_GEN ${nle_BINARY_DIR}/util)
 set(CMAKE_INSTALL_MESSAGE LAZY) # Don't tell us about up-to-date files.
 
 # EXCLUDE_FROM_ALL: Don't install this static library into /usr/local.
-add_subdirectory(third_party/deboost.context EXCLUDE_FROM_ALL)
 add_subdirectory(util)
 add_subdirectory(dat)
 
@@ -125,7 +140,6 @@ target_include_directories(rlmain PUBLIC ${NLE_INC_GEN})
 add_dependencies(rlmain util) # For pm.h.
 
 # pybind11 python library.
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/pybind11)
 pybind11_add_module(_pynethack win/rl/pynethack.cc src/monst.c src/decl.c
                     src/drawing.c src/objects.c)
 target_link_libraries(_pynethack PUBLIC nethackdl)
