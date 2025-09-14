@@ -17,7 +17,9 @@ jobs:
 
     - name: Get changed files
       id: changed-files
-      uses: tj-actions/changed-files@v1.1.2
+      uses: step-security/changed-files@v46
+      with:
+        files_ignore: uv.lock
 
     - name: Check copyright header in added files
       shell: bash
