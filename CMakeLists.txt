@@ -34,6 +34,25 @@ message(STATUS "Building nle backend version: ${NLE_VERSION}")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# pybind11 core python library.
+include(FetchContent)
+set(PYBIND11_FINDPYTHON OLD)
+FetchContent_Declare(
+  pybind11
+  GIT_REPOSITORY https://github.com/pybind/pybind11.git
+  # GIT_HASH "8de7772cc72daca8e947b79b83fea46214931604"
+  GIT_HASH d4d555d9e05ad77c1f7ed1e900cb987e691445d6)
+FetchContent_MakeAvailable(pybind11)
+find_package(pybind11 CONFIG REQUIRED)
+
+# de-boost-ified version of boost.context via FetchContent
+FetchContent_Declare(
+  deboost_context
+  GIT_REPOSITORY https://github.com/septag/deboost.context.git
+  # GIT_HASH "0010a6074872349d0089223fea4a1556cb172b27"
+  GIT_HASH 259fc4103bad6bb484d5ff426ace56ac557107a4)
+FetchContent_MakeAvailable(deboost_context)
+
 # We use this to decide where the root of the nle/ package is. Normally it
 # shouldn't be needed, but sometimes (e.g. when using setuptools) we are
 # generating some of the files outside of the original package path.
@@ -86,8 +105,6 @@ set(NLE_UTIL_GEN ${nle_BINARY_DIR}/util)
 
 set(CMAKE_INSTALL_MESSAGE LAZY) # Don't tell us about up-to-date files.
 
-# EXCLUDE_FROM_ALL: Don't install this static library into /usr/local.
-add_subdirectory(third_party/deboost.context EXCLUDE_FROM_ALL)
 add_subdirectory(util)
 add_subdirectory(dat)
 
@@ -127,15 +144,7 @@ add_library(nethackdl STATIC "sys/unix/nledl.c")
 target_include_directories(nethackdl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(nethackdl PUBLIC dl)
 
-# rlmain C++ (test) binary
-add_executable(rlmain "sys/unix/rlmain.cc")
-set_target_properties(rlmain PROPERTIES CXX_STANDARD 11)
-target_link_libraries(rlmain PUBLIC nethackdl)
-target_include_directories(rlmain PUBLIC ${NLE_INC_GEN})
-add_dependencies(rlmain util) # For pm.h.
-
-# pybind11 core python library.
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/pybind11)
+# Python extension module
 pybind11_add_module(
   _pynethack
   win/rl/pynethack.cc
@@ -144,6 +153,14 @@ pybind11_add_module(
   src/drawing.c
   src/objects.c
   $<TARGET_OBJECTS:tile>)
+
+# rlmain C++ (test) binary
+add_executable(rlmain "sys/unix/rlmain.cc")
+set_target_properties(rlmain PROPERTIES CXX_STANDARD 11)
+target_link_libraries(rlmain PUBLIC nethackdl)
+target_include_directories(rlmain PUBLIC ${NLE_INC_GEN})
+add_dependencies(rlmain util) # For pm.h.
+
 target_link_libraries(_pynethack PUBLIC nethackdl)
 set_target_properties(_pynethack PROPERTIES CXX_STANDARD 14)
 target_include_directories(_pynethack PUBLIC ${NLE_INC_GEN})
@@ -172,3 +189,6 @@ target_link_libraries(_pyconverter PUBLIC converter)
 set_target_properties(_pyconverter PROPERTIES CXX_STANDARD 14)
 target_include_directories(
   _pyconverter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third_party/converter)
+
+install(TARGETS _pynethack _pyconverter nethack
+        LIBRARY DESTINATION ${SKBUILD_PROJECT_NAME})

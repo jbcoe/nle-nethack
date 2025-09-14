@@ -354,7 +354,7 @@ class TestNethackFunctionsAndConstants:
             match=r"should be between 0 and MAXMCLASSES \(%i\) but got 127"
             % nethack.MAXMCLASSES,
         ):
-            nethack.class_sym.from_mlet("\x7F")
+            nethack.class_sym.from_mlet("\x7f")
 
     def test_objclass(self):
         obj = nethack.objclass(0)
