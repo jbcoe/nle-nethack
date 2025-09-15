@@ -9,7 +9,7 @@ from memory_profiler import memory_usage
 from nle.dataset import Converter
 
 # From
-#   https://alt.org/nethack/trd/?file=https://s3.amazonaws.com/altorg/ttyrec/Anarchos/2020-10-03.17:27:10.ttyrec.bz2  # noqa: B950
+#   https://alt.org/nethack/trd/?file=https://s3.amazonaws.com/altorg/ttyrec/Anarchos/2020-10-03.17:27:10.ttyrec.bz2
 TTYREC_2020 = "2020-10-03.17_27_10.ttyrec.bz2"
 COLSROWS = "2020-10-03.17_27_10.rowscols.txt"
 TIMESTAMPS = "2020-10-03.17_27_10.timestamps.txt.bz2"
@@ -17,30 +17,30 @@ FINALFRAME = "2020-10-03.17_27_10.finalframe.txt"
 FINALFRAMECOLORS = "2020-10-03.17_27_10.finalframe.colors.txt"
 
 # From
-#  https://alt.org/nethack/trd/?file=https://s3.amazonaws.com/altorg/ttyrec/Qvazzler/2009-02-05.10:33:51.ttyrec.bz2  # noqa: B950
+#  https://alt.org/nethack/trd/?file=https://s3.amazonaws.com/altorg/ttyrec/Qvazzler/2009-02-05.10:33:51.ttyrec.bz2
 # This ttyrec uses IBMGraphics (code page 437)
 TTYREC_IBMGRAPHICS = "2009-02-05.10_33_51.ttyrec.bz2"
 TTYREC_IBMGRAPHICS_FRAME_10 = "2009-02-05.10_33_51.frame.10.txt"
 
 # From
-#  https://alt.org/nethack/trd/?file=https://s3.amazonaws.com/altorg/ttyrec/moo22/2018-09-27.00:20:39.ttyrec.bz2  # noqa: B950
+#  https://alt.org/nethack/trd/?file=https://s3.amazonaws.com/altorg/ttyrec/moo22/2018-09-27.00:20:39.ttyrec.bz2
 TTYREC_2018 = "2018-09-27.00_20_39.ttyrec.bz2"
 
 # From
-#  https://alt.org/nethack/trd/?file=https://s3.amazonaws.com/altorg/ttyrec/mackeyth/2017-07-28.18:44:17.ttyrec.bz2  # noqa: B950
+#  https://alt.org/nethack/trd/?file=https://s3.amazonaws.com/altorg/ttyrec/mackeyth/2017-07-28.18:44:17.ttyrec.bz2
 # This ttyrec uses DECGraphics (https://en.wikipedia.org/wiki/DEC_Special_Graphics)
 TTYREC_DECGRAPHICS = "2017-07-28.18_44_17.ttyrec.bz2"
 TTYREC_DECGRAPHICS_FRAME_10 = "2017-07-28.18_44_17.frame.10.txt"
 
 # From
-#  https://alt.org/nethack/trd/?file=https://s3.amazonaws.com/altorg/ttyrec/waIrus/2019-11-18.08:52:15.ttyrec.bz2  # noqa: B950
-# This ttyrec uses unknown control sequences - it looks like maybe VT420 with rectangle control. `ESC [ %d ; %d ; %d ; %d z`  # noqa: B950
+#  https://alt.org/nethack/trd/?file=https://s3.amazonaws.com/altorg/ttyrec/waIrus/2019-11-18.08:52:15.ttyrec.bz2
+# This ttyrec uses unknown control sequences - it looks like maybe VT420 with rectangle control. `ESC [ %d ; %d ; %d ; %d z`
 TTYREC_UNKGRAPHICS = "2019-11-18.08_52_15.ttyrec.bz2"
 TTYREC_UNKGRAPHICS_FRAME_10 = "2019-11-18.08_52_15.frame.10.txt"
 
 # From
-#  https://alt.org/nethack/trd/?file=https://s3.amazonaws.com/altorg/ttyrec/fare/2012-02-16.21:09:51.ttyrec.bz2  # noqa: B950
-# This ttyrec uses SHIFT IN and SHIFT OUT ASCII control sequences toggle DEC graphics set.  # noqa: B950
+#  https://alt.org/nethack/trd/?file=https://s3.amazonaws.com/altorg/ttyrec/fare/2012-02-16.21:09:51.ttyrec.bz2
+# This ttyrec uses SHIFT IN and SHIFT OUT ASCII control sequences toggle DEC graphics set.
 TTYREC_SHIFTIN = "2012-02-16.21_09_51.ttyrec.bz2"
 TTYREC_SHIFTIN_FRAME_10 = "2012-02-16.21_09_51.frame.10.txt"
 

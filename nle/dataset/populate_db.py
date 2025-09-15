@@ -151,7 +151,7 @@ def add_altorg_directory(path, name, filename=nld.db.DB):
             game_gen = game_data_generator(xlogfile, separator=sep)
             insert_sql = f"""
                 INSERT INTO games
-                VALUES (NULL, {','.join('?' for _ in XLOGFILE_COLUMNS)} )
+                VALUES (NULL, {",".join("?" for _ in XLOGFILE_COLUMNS)} )
             """
             c.executemany(insert_sql, game_gen)
 
@@ -293,7 +293,7 @@ def add_nledata_directory(path, name, filename=nld.db.DB):
             game_gen = game_data_generator(xlogfile, filter=_filter)
             insert_sql = f"""
                 INSERT INTO games
-                VALUES (NULL, {','.join('?' for _ in XLOGFILE_COLUMNS)} )
+                VALUES (NULL, {",".join("?" for _ in XLOGFILE_COLUMNS)} )
             """
             c.executemany(insert_sql, game_gen)
             gameids = nld.db.get_most_recent_games(c.rowcount, conn=c)

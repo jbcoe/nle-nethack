@@ -15,7 +15,7 @@ parser.add_argument(
     "-1",
     "--no_input",
     action="store_true",
-    help=("Save in ttyrec (not ttyrec2) format, " "without input data"),
+    help=("Save in ttyrec (not ttyrec2) format, without input data"),
 )
 parser.add_argument(
     "-e", "--execute", metavar="CMD", help="command to run (default: /bin/sh)"
