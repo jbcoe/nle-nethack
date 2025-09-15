@@ -203,3 +203,6 @@ target_link_libraries(_pyconverter PUBLIC converter)
 set_target_properties(_pyconverter PROPERTIES CXX_STANDARD 14)
 target_include_directories(
   _pyconverter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third_party/converter)
+
+install(TARGETS _pynethack _pyconverter nethack
+        LIBRARY DESTINATION ${SKBUILD_PROJECT_NAME})
