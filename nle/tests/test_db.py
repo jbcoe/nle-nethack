@@ -4,8 +4,7 @@ import pytest
 import test_converter
 
 import nle.env.tasks
-from nle.dataset import db
-from nle.dataset import populate_db
+from nle.dataset import db, populate_db
 
 TTYRECS = [
     ("aaa", test_converter.TTYREC_2020),

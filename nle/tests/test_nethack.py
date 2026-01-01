@@ -7,8 +7,7 @@ import warnings
 import numpy as np
 import pytest
 
-from nle import _pynethack
-from nle import nethack
+from nle import _pynethack, nethack
 
 # MORE + compass directions + long compass directions.
 ACTIONS = [
