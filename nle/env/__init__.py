@@ -2,7 +2,7 @@
 import gymnasium as gym
 from gymnasium.envs import registration
 
-from nle.env.base import NLE, DUNGEON_SHAPE
+from nle.env.base import DUNGEON_SHAPE, NLE
 
 _version = "v0"
 

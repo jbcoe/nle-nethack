@@ -2,8 +2,10 @@ import json
 
 import pytest  # NOQA: F401
 from test_converter import getfilename
-from test_db import conn  # NOQA: F401
-from test_db import mockdata  # NOQA: F401
+from test_db import (
+    conn,  # NOQA: F401
+    mockdata,  # NOQA: F401
+)
 
 from nle import nethack
 
