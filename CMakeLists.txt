@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-file(STRINGS "version.txt" NLE_VERSION)
+set(NLE_VERSION 1.2.0)
 # Remove any rcXX suffix from the version number as CMake doesn't like it
 string(REGEX REPLACE "rc[0-9+]$" "" CMAKE_NLE_VERSION ${NLE_VERSION})
 project(nle VERSION ${CMAKE_NLE_VERSION})
@@ -35,13 +35,6 @@ endif()
 message(STATUS "Building nle backend version: ${CMAKE_NLE_VERSION}")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-# We use this to decide where the root of the nle/ package is. Normally it
-# shouldn't be needed, but sometimes (e.g. when using setuptools) we are
-# generating some of the files outside of the original package path.
-set(PYTHON_SRC_PARENT
-    ${nle_SOURCE_DIR}
-    CACHE STRING "Directory containing the nle package files")
 
 set(HACKDIR
     "$ENV{HOME}/nethackdir.nle"
