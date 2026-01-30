@@ -4,19 +4,16 @@ import contextlib
 
 import numpy as np
 import pytest
-from test_converter import (
-    COLSROWS,
-    FINALFRAME,
-    FINALFRAMECOLORS,
-    TIMESTAMPS,
-    getfilename,
-)
-from test_db import (
-    conn,  # noqa: F401
-    mockdata,  # noqa: F401
-)
+from test_converter import COLSROWS
+from test_converter import FINALFRAME
+from test_converter import FINALFRAMECOLORS
+from test_converter import TIMESTAMPS
+from test_converter import getfilename
+from test_db import conn  # noqa: F401
+from test_db import mockdata  # noqa: F401
 
-from nle.dataset import dataset, db
+from nle.dataset import dataset
+from nle.dataset import db
 
 
 class TestDataset:

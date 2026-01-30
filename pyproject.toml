@@ -58,13 +58,19 @@ all = ["nle[agent,dev]"]
 # See https://docs.astral.sh/ruff/rules/.
 extend-exclude = ["third_party"]
 exclude = ["win/rl/nle"]
+
 [tool.ruff.lint]
 ignore = ["B008", "B905", "C901", "E501", "E731"]
 select = ["B", "B9", "C", "E", "F", "I", "R", "W"]
+
 [tool.ruff.lint.flake8-comprehensions]
 allow-dict-calls-with-keyword-arguments = true
+
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"] # unused-import.
+
+[tool.ruff.lint.isort]
+force-single-line = true
 
 [tool.cibuildwheel]
 # We need to build wheels for the following Python versions:
