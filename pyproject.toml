@@ -1,10 +1,10 @@
 [project]
 name = "nle"
+dynamic = ["version"]
 description = "The NetHack Learning Environment (NLE): a reinforcement learning environment based on NetHack"
 readme = "README.md"
 authors = [{ name = "The NLE Dev Team" }]
 requires-python = ">=3.10"
-version = "1.2.0"
 classifiers = [
   "License :: OSI Approved :: Nethack General Public License",
   "Development Status :: 5 - Production/Stable",

@@ -1,7 +1,15 @@
 cmake_minimum_required(VERSION 3.28)
-set(NLE_VERSION 1.2.0)
-# Remove any rcXX suffix from the version number as CMake doesn't like it
-string(REGEX REPLACE "rc[0-9+]$" "" CMAKE_NLE_VERSION ${NLE_VERSION})
+if(NOT DEFINED NLE_VERSION)
+  if(DEFINED SKBUILD_PROJECT_VERSION)
+    set(NLE_VERSION ${SKBUILD_PROJECT_VERSION})
+  else()
+    message(FATAL_ERROR "NLE_VERSION not defined.")
+  endif()
+endif()
+
+# Extract version number (major.minor.patch) as CMake doesn't like rc/dev
+# suffixes
+string(REGEX MATCH "^[0-9]+(\\.[0-9]+)*" CMAKE_NLE_VERSION "${NLE_VERSION}")
 project(nle VERSION ${CMAKE_NLE_VERSION})
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
