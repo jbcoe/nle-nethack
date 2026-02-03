@@ -142,6 +142,7 @@ jobs:
         run: | 
           WHEELNAME=$(ls dist/*313*manylinux*x86_64*.whl) 
           MODE="[all]"
+          uv venv
           uv pip install "$WHEELNAME$MODE"
       - name: Run tests outside repo dir
         run: |
