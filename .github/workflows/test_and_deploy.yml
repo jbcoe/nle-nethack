@@ -42,9 +42,9 @@ jobs:
     name: Test sdist on MacOS w/ Py3.10
     needs: test_repo
     runs-on: macos-latest
-    steps:
-      - name: Setup Python 3.10 env
-        uses: actions/setup-python@v5
+    steps:        
+      - name: Setup Python 3.10 env using uv
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: '3.10'
       - uses: actions/checkout@v4
@@ -67,10 +67,10 @@ jobs:
     needs: test_repo
     runs-on: macos-latest
     steps:
-      - name: Setup Python 3.13 env
-        uses: actions/setup-python@v5
+      - name: Setup Python 3.13 env using uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: 3.13
+          python-version: '3.13'
       - uses: actions/checkout@v4
       - name: Generate sdist
         run: |
@@ -126,10 +126,10 @@ jobs:
     needs: build_wheels
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Python 3.13 env
-        uses: actions/setup-python@v5
+      - name: Setup Python 3.13 env using uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: 3.13
+          python-version: '3.13'
       - uses: actions/checkout@v4
       - name: Get wheels artifacts
         uses: actions/download-artifact@v4
