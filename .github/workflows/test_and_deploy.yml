@@ -55,6 +55,7 @@ jobs:
         run: |
           SDISTNAME=$(ls dist/)
           MODE="[all]"
+          uv venv
           uv pip install "dist/$SDISTNAME$MODE"
       - name: Run tests outside repo dir
         run: |
@@ -79,6 +80,7 @@ jobs:
         run: |
           SDISTNAME=$(ls dist/)
           MODE="[all]"
+          uv venv
           uv pip install "dist/$SDISTNAME$MODE"
       - name: Run tests outside repo dir
         run: |
