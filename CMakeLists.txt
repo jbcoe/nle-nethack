@@ -3,7 +3,7 @@ if(NOT DEFINED NLE_VERSION)
   if(DEFINED SKBUILD_PROJECT_VERSION)
     set(NLE_VERSION ${SKBUILD_PROJECT_VERSION})
   else()
-    message(FATAL_ERROR "NLE_VERSION not defined.")
+    set(NLE_VERSION "0.0.0") # Unversioned.
   endif()
 endif()
 
@@ -204,8 +204,11 @@ set_target_properties(_pyconverter PROPERTIES CXX_STANDARD 14)
 target_include_directories(
   _pyconverter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third_party/converter)
 
-install(
-  TARGETS _pynethack _pyconverter nethack
-  RUNTIME DESTINATION ${PYTHON_PACKAGE_NAME}
-  LIBRARY DESTINATION ${PYTHON_PACKAGE_NAME}
-  ARCHIVE DESTINATION ${PYTHON_PACKAGE_NAME})
+# Only install if we are building as part of a Python project.
+if(DEFINED SKBUILD_PROJECT_VERSION)
+  install(
+    TARGETS _pynethack _pyconverter nethack
+    RUNTIME DESTINATION ${PYTHON_PACKAGE_NAME}
+    LIBRARY DESTINATION ${PYTHON_PACKAGE_NAME}
+    ARCHIVE DESTINATION ${PYTHON_PACKAGE_NAME})
+endif()
