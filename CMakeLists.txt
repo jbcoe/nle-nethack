@@ -70,6 +70,8 @@ FetchContent_Declare(
   GIT_HASH "259fc4103bad6bb484d5ff426ace56ac557107a4" EXCLUDE_FROM_ALL)
 FetchContent_MakeAvailable(deboost_context)
 
+find_program(UV_EXECUTABLE uv REQUIRED)
+
 add_compile_definitions(
   GCC_WARN
   NOCLIPPING
@@ -204,6 +206,32 @@ set_target_properties(_pyconverter PROPERTIES CXX_STANDARD 14)
 target_include_directories(
   _pyconverter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third_party/converter)
 
+set(STUB_DIR ${CMAKE_CURRENT_BINARY_DIR}/stubs)
+set_directory_properties(PROPERTIES ADDITIONAL_CLEAN_FILES "${STUB_DIR}")
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/stubs/nle/_pyconverter.pyi
+  COMMAND ${UV_EXECUTABLE} run --with pybind11-stubgen --with numpy python -m
+          pybind11_stubgen _pyconverter --output-dir ${STUB_DIR}
+  WORKING_DIRECTORY $<TARGET_FILE_DIR:_pyconverter>
+  DEPENDS _pyconverter
+  COMMENT "Generating type stubs with uv (deps: pybind11-stubgen)..."
+  VERBATIM)
+
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/stubs/nle/_pynethack/__init__.pyi
+  COMMAND
+    ${UV_EXECUTABLE} run --with pybind11-stubgen python -m pybind11_stubgen
+    _pynethack --output-dir ${STUB_DIR} --ignore-unresolved-names game_end_types
+  WORKING_DIRECTORY $<TARGET_FILE_DIR:_pynethack>
+  DEPENDS _pynethack
+  COMMENT "Generating type stubs with uv (deps: numpy, pybind11-stubgen)..."
+  VERBATIM)
+
+add_custom_target(
+  my_module_stubs ALL
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/stubs/nle/_pynethack/__init__.pyi
+          ${CMAKE_CURRENT_BINARY_DIR}/stubs/nle/_pyconverter.pyi)
+
 # Only install if we are building as part of a Python project.
 if(DEFINED SKBUILD_PROJECT_VERSION)
   install(
@@ -211,4 +239,10 @@ if(DEFINED SKBUILD_PROJECT_VERSION)
     RUNTIME DESTINATION ${PYTHON_PACKAGE_NAME}
     LIBRARY DESTINATION ${PYTHON_PACKAGE_NAME}
     ARCHIVE DESTINATION ${PYTHON_PACKAGE_NAME})
+
+  install(
+    DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/stubs/"
+    DESTINATION ${PYTHON_PACKAGE_NAME}
+    FILES_MATCHING
+    PATTERN "*.pyi")
 endif()
