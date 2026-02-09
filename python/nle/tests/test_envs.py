@@ -8,11 +8,10 @@ import sys
 import tempfile
 
 import gymnasium as gym
-import numpy as np
-import pytest
-
 import nle
 import nle.env
+import numpy as np
+import pytest
 from nle import nethack
 
 

@@ -5,7 +5,6 @@ import re
 import numpy as np
 import pytest
 from memory_profiler import memory_usage
-
 from nle.dataset import Converter
 
 # From

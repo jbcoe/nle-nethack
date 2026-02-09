@@ -6,7 +6,6 @@ import warnings
 
 import numpy as np
 import pytest
-
 from nle import _pynethack
 from nle import nethack
 

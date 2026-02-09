@@ -8,10 +8,9 @@
 import os
 
 import gymnasium as gym
+import nle  # noqa: F401
 import numpy as np
 import pytest
-
-import nle  # noqa: F401
 
 BASE_KEYS = ["glyphs", "message", "blstats"]
 MAPPED_GLYPH = ["chars", "colors", "specials"]

@@ -1,9 +1,8 @@
 import os
 
+import nle.env.tasks
 import pytest
 import test_converter
-
-import nle.env.tasks
 from nle.dataset import db
 from nle.dataset import populate_db
 

@@ -1,11 +1,10 @@
 import json
 
 import pytest  # NOQA: F401
+from nle import nethack
 from test_converter import getfilename
 from test_db import conn  # NOQA: F401
 from test_db import mockdata  # NOQA: F401
-
-from nle import nethack
 
 TTYRECS_TABLE_OFFSET = 0
 GAMES_TABLE_OFFSET = 5

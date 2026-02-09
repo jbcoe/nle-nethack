@@ -5,9 +5,8 @@ import random
 import threading
 
 import gymnasium as gym
-import pytest
-
 import nle  # noqa: F401
+import pytest
 
 START_METHODS = [m for m in ("fork", "spawn") if m in mp.get_all_start_methods()]
 
