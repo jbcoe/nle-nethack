@@ -206,25 +206,28 @@ set_target_properties(_pyconverter PROPERTIES CXX_STANDARD 14)
 target_include_directories(
   _pyconverter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third_party/converter)
 
+find_package(
+  Python
+  COMPONENTS Interpreter
+  REQUIRED)
 set(STUB_DIR ${CMAKE_CURRENT_BINARY_DIR}/stubs)
 set_directory_properties(PROPERTIES ADDITIONAL_CLEAN_FILES "${STUB_DIR}")
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/stubs/nle/_pyconverter.pyi
-  COMMAND ${UV_EXECUTABLE} run --with pybind11-stubgen --with numpy python -m
-          pybind11_stubgen _pyconverter --output-dir ${STUB_DIR}
+  COMMAND ${Python_INTERPRETER} -m pybind11_stubgen _pyconverter --output-dir
+          ${STUB_DIR}
   WORKING_DIRECTORY $<TARGET_FILE_DIR:_pyconverter>
   DEPENDS _pyconverter
-  COMMENT "Generating type stubs with uv (deps: pybind11-stubgen)..."
+  COMMENT "Generating type stubs with uv ..."
   VERBATIM)
 
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/stubs/nle/_pynethack/__init__.pyi
-  COMMAND
-    ${UV_EXECUTABLE} run --with pybind11-stubgen python -m pybind11_stubgen
-    _pynethack --output-dir ${STUB_DIR} --ignore-unresolved-names game_end_types
+  COMMAND ${Python_INTERPRETER} -m pybind11_stubgen _pynethack --output-dir
+          ${STUB_DIR} --ignore-unresolved-names game_end_types
   WORKING_DIRECTORY $<TARGET_FILE_DIR:_pynethack>
   DEPENDS _pynethack
-  COMMENT "Generating type stubs with uv (deps: numpy, pybind11-stubgen)..."
+  COMMENT "Generating type stubs with uv ..."
   VERBATIM)
 
 add_custom_target(
