@@ -38,6 +38,6 @@ jobs:
           uv venv
           uv pip install pybind11-stubgen numpy
       - name: Check CMake configure
-        run: cmake -DPython3_EXECUTABLE=$(pwd)/.venv/bin/python -B build -G Ninja
+        run: cmake -DPython_EXECUTABLE=$(pwd)/.venv/bin/python -B build -G Ninja
       - name: CMake build
         run: cmake --build build
