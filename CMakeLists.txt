@@ -70,8 +70,6 @@ FetchContent_Declare(
   GIT_HASH "259fc4103bad6bb484d5ff426ace56ac557107a4" EXCLUDE_FROM_ALL)
 FetchContent_MakeAvailable(deboost_context)
 
-find_program(UV_EXECUTABLE uv REQUIRED)
-
 add_compile_definitions(
   GCC_WARN
   NOCLIPPING
