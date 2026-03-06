@@ -54,6 +54,13 @@ message(STATUS "HACKDIR set to: ${HACKDIR}")
 set(VARDIR ${HACKDIR})
 set(INSTDIR ${HACKDIR})
 
+# A Python interepreter is needed to generate typestubs.
+message(STATUS "DEBUG: Python_EXECUTABLE is set to: ${Python_EXECUTABLE}")
+find_package(
+  Python
+  COMPONENTS Interpreter
+  REQUIRED)
+
 # pybind11 via FetchContent
 include(FetchContent)
 FetchContent_Declare(
@@ -204,10 +211,6 @@ set_target_properties(_pyconverter PROPERTIES CXX_STANDARD 14)
 target_include_directories(
   _pyconverter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third_party/converter)
 
-find_package(
-  Python
-  COMPONENTS Interpreter
-  REQUIRED)
 set(STUB_DIR ${CMAKE_CURRENT_BINARY_DIR}/stubs)
 set_directory_properties(PROPERTIES ADDITIONAL_CLEAN_FILES "${STUB_DIR}")
 add_custom_command(
