@@ -216,7 +216,7 @@ add_custom_command(
           ${STUB_DIR}
   WORKING_DIRECTORY $<TARGET_FILE_DIR:_pyconverter>
   DEPENDS _pyconverter
-  COMMENT "Generating type stubs with uv ..."
+  COMMENT "Generating type stubs ..."
   VERBATIM)
 
 add_custom_command(
@@ -225,7 +225,7 @@ add_custom_command(
           ${STUB_DIR} --ignore-unresolved-names game_end_types
   WORKING_DIRECTORY $<TARGET_FILE_DIR:_pynethack>
   DEPENDS _pynethack
-  COMMENT "Generating type stubs with uv ..."
+  COMMENT "Generating type stubs ..."
   VERBATIM)
 
 add_custom_target(
