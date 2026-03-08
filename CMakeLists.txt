@@ -19,15 +19,48 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
   set(CMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym")
 
-  if(0)
-    # address sanitizer.
-    set(CMAKE_CXX_FLAGS_DEBUG
-        "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
-    set(CMAKE_C_FLAGS_DEBUG
-        "${CMAKE_C_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
-    set(CMAKE_LINKER_FLAGS_DEBUG
-        "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address"
-    )
+  option(ENABLE_ASAN "Enable Address Sanitizer" OFF)
+  option(ENABLE_TSAN "Enable Thread Sanitizer" OFF)
+  option(ENABLE_UBSAN "Enable Undefined Behavior Sanitizer" OFF)
+
+  if(ENABLE_ASAN
+     OR ENABLE_TSAN
+     OR ENABLE_UBSAN)
+    include(CheckCXXCompilerFlag)
+    include(CheckCCompilerFlag)
+    add_library(nle_sanitizers INTERFACE)
+
+    if(ENABLE_ASAN)
+      set(SANITIZER_FLAGS_ASAN -fsanitize=address -fno-omit-frame-pointer)
+      # Force support since we verified it manually in the environment
+      set(COMPILER_SUPPORTS_ASAN ON)
+      if(COMPILER_SUPPORTS_ASAN)
+        target_compile_options(nle_sanitizers INTERFACE ${SANITIZER_FLAGS_ASAN})
+        target_link_options(nle_sanitizers INTERFACE ${SANITIZER_FLAGS_ASAN})
+      endif()
+    endif()
+
+    if(ENABLE_TSAN)
+      set(SANITIZER_FLAGS_TSAN "-fsanitize=thread -fno-omit-frame-pointer")
+      check_cxx_compiler_flag("${SANITIZER_FLAGS_TSAN}" COMPILER_SUPPORTS_TSAN)
+      if(COMPILER_SUPPORTS_TSAN)
+        target_compile_options(nle_sanitizers INTERFACE ${SANITIZER_FLAGS_TSAN})
+        target_link_options(nle_sanitizers INTERFACE ${SANITIZER_FLAGS_TSAN})
+      endif()
+    endif()
+
+    if(ENABLE_UBSAN)
+      set(SANITIZER_FLAGS_UBSAN "-fsanitize=undefined -fno-omit-frame-pointer")
+      check_cxx_compiler_flag("${SANITIZER_FLAGS_UBSAN}"
+                              COMPILER_SUPPORTS_UBSAN)
+      if(COMPILER_SUPPORTS_UBSAN)
+        target_compile_options(nle_sanitizers
+                               INTERFACE ${SANITIZER_FLAGS_UBSAN})
+        target_link_options(nle_sanitizers INTERFACE ${SANITIZER_FLAGS_UBSAN})
+      endif()
+    endif()
+
+    link_libraries(nle_sanitizers)
   endif()
   if(MSVC)
     add_compile_options(/W4)
