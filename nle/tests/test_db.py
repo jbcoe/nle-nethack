@@ -133,6 +133,7 @@ def conn(mockdata):
         yield conn
 
 
+@pytest.mark.usefixtures("mockdata")
 class TestDB:
     def test_conn(self, conn):
         assert conn
