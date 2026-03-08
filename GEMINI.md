@@ -56,26 +56,7 @@ Handles the low-level lifecycle of the NetHack process, including memory managem
 
 ## Sandboxed Execution (Docker)
 
-To run interactions in a secure sandbox, use the provided `.devcontainer/Dockerfile`.
-
-### 1. Build the Sandbox
-```bash
-docker build -t nle-sandbox -f .devcontainer/Dockerfile .
-```
-
-### 2. Run the Sandbox
-Forward your `GEMINI_API_KEY` at runtime to avoid hardcoding it:
-```bash
-docker run -it --rm \
-  -v "$(pwd):/workspace" \
-  -e GEMINI_API_KEY=$GEMINI_API_KEY \
-  nle-sandbox
-```
-
-Once inside the container, you can start the agent with:
-```bash
-gemini
-```
+To run interactions in a secure sandbox, use `scripts/gemini-sandbox.sh`.
 
 ---
 
