@@ -32,6 +32,20 @@ ACTIONS = [
 ]
 
 
+@pytest.fixture(autouse=True)
+def disable_ttyrec_by_default(monkeypatch):
+    """Monkeypatches Nethack to disable ttyrec recording unless specified."""
+    original_init = nethack.Nethack.__init__
+
+    def new_init(self, *args, **kwargs):
+        # If ttyrec is not explicitly passed, disable it.
+        if "ttyrec" not in kwargs:
+            kwargs["ttyrec"] = None
+        original_init(self, *args, **kwargs)
+
+    monkeypatch.setattr(nethack.Nethack, "__init__", new_init)
+
+
 class TestNetHack:
     @pytest.fixture
     def game(self):  # Make sure we close even on test failure.
@@ -141,9 +155,11 @@ class TestNetHack:
 
 
 class TestNetHackFurther:
-    def test_run(self):
+    def test_run(self, tmpdir):
+        ttyrec_path = os.path.join(tmpdir, "nle.ttyrec%i.bz2" % nethack.TTYREC_VERSION)
         game = nethack.Nethack(
-            observation_keys=("glyphs", "chars", "colors", "blstats", "program_state")
+            ttyrec=ttyrec_path,
+            observation_keys=("glyphs", "chars", "colors", "blstats", "program_state"),
         )
         _, _, _, _, program_state = game.reset()
         actions = [
@@ -186,9 +202,7 @@ class TestNetHackFurther:
             assert class_sym.explain == "human or elf"
 
         game.close()
-        assert os.path.isfile(
-            os.path.join(os.getcwd(), "nle.ttyrec%i.bz2" % nethack.TTYREC_VERSION)
-        )
+        assert os.path.isfile(ttyrec_path)
 
     def test_illegal_filename(self):
         with pytest.raises(IOError):
