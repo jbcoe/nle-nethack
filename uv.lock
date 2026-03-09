@@ -471,6 +471,7 @@ all = [
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-benchmark" },
+    { name = "pytest-xdist" },
     { name = "ruff" },
     { name = "setuptools" },
     { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
@@ -484,6 +485,7 @@ dev = [
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-benchmark" },
+    { name = "pytest-xdist" },
     { name = "ruff" },
     { name = "setuptools" },
     { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
@@ -494,7 +496,6 @@ dev = [
 [package.dev-dependencies]
 dev = [
     { name = "nle", extra = ["dev"] },
-    { name = "pytest-xdist" },
 ]
 
 [package.metadata]
@@ -508,6 +509,7 @@ requires-dist = [
     { name = "pybind11", specifier = ">=2.2" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=6.2.5" },
     { name = "pytest-benchmark", marker = "extra == 'dev'", specifier = ">=3.4.1" },
+    { name = "pytest-xdist", marker = "extra == 'dev'", specifier = ">=3.8.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = "==0.4.3" },
     { name = "setuptools", marker = "extra == 'dev'", specifier = ">=69.5.1" },
     { name = "sphinx", marker = "extra == 'dev'", specifier = ">=2.4.4" },
@@ -517,10 +519,7 @@ requires-dist = [
 provides-extras = ["agent", "dev", "all"]
 
 [package.metadata.requires-dev]
-dev = [
-    { name = "nle", extras = ["dev"] },
-    { name = "pytest-xdist", specifier = ">=3.8.0" },
-]
+dev = [{ name = "nle", extras = ["dev"] }]
 
 [[package]]
 name = "nodeenv"
