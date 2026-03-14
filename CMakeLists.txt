@@ -93,7 +93,8 @@ target_compile_definitions(
             DEFAULT_WINDOW_SYS="rl"
             DLB
             NOCWD_ASSUMPTIONS
-            NLE_USE_TILES)
+            NLE_USE_TILES
+            NOCWD_ASSUMPTIONS)
 
 if(MSVC)
   target_compile_options(nle_common_options INTERFACE /W4)
@@ -176,6 +177,10 @@ set_target_properties(tmt PROPERTIES C_STANDARD 11)
 add_library(nethack SHARED ${NETHACK_SRC})
 add_dependencies(nethack util dat)
 set_target_properties(nethack PROPERTIES CXX_STANDARD 14 SUFFIX ".so")
+target_compile_options(
+  nethack
+  PRIVATE -Wno-deprecated-non-prototype
+  PRIVATE -Wno-unused-variable)
 target_include_directories(
   nethack
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${NLE_INC_GEN} /usr/local/include
@@ -213,8 +218,8 @@ pybind11_add_module(
   $<TARGET_OBJECTS:tile>)
 target_link_libraries(_pynethack PUBLIC nle_common_options nethackdl)
 set_target_properties(_pynethack PROPERTIES CXX_STANDARD 14)
-target_include_directories(_pynethack PUBLIC ${NLE_INC_GEN})
-add_dependencies(_pynethack util) # For pm.h.
+target_include_directories(_pynethack PUBLIC ${NLE_INC_GEN} ${NLE_WIN}/share)
+# add_dependencies(_pynethack util tile) # For pm.h.
 
 # ttyrec converter library
 add_library(
@@ -241,6 +246,10 @@ set_target_properties(_pyconverter PROPERTIES CXX_STANDARD 14)
 target_include_directories(
   _pyconverter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third_party/converter)
 
+set(TILE_FILES "win/share/monsters.txt" "win/share/objects.txt"
+               "win/share/other.txt")
+
+install(FILES ${TILE_FILES} DESTINATION ${INSTDIR}/tiles)
 # Only install if we are building as part of a Python project.
 if(DEFINED SKBUILD_PROJECT_VERSION)
   install(
