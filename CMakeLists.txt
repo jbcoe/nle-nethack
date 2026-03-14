@@ -96,9 +96,9 @@ target_compile_definitions(
             NLE_USE_TILES)
 
 if(MSVC)
-  target_compile_options(nle_common_options INTERFACE /W4)
+  add_compile_options(/W4)
 else()
-  target_compile_options(nle_common_options INTERFACE -Wall)
+  add_compile_options(-Wall)
 endif()
 
 # pybind11 via FetchContent
@@ -171,6 +171,9 @@ target_include_directories(bz2_static PUBLIC ${bzip2_SOURCE_DIR})
 # terminal emulator library
 add_library(tmt STATIC "third_party/libtmt/tmt.c")
 set_target_properties(tmt PROPERTIES C_STANDARD 11)
+if(NOT MSVC)
+  target_compile_options(tmt PRIVATE -Wno-unused-function -Wno-unused-variable)
+endif()
 
 # libnethack library
 add_library(nethack SHARED ${NETHACK_SRC})
@@ -187,6 +190,20 @@ target_include_directories(
 
 target_link_libraries(nethack PUBLIC nle_common_options m fcontext bz2_static
                                      tmt)
+if(NOT MSVC)
+  target_compile_options(
+    nethack
+    PRIVATE -Wno-address
+            -Wno-deprecated-non-prototype
+            -Wno-format-overflow
+            -Wno-sign-compare
+            -Wno-stringop-truncation
+            -Wno-unknown-warning-option
+            -Wno-unused-but-set-variable
+            -Wno-unused-const-variable
+            -Wno-unused-function
+            -Wno-unused-variable)
+endif()
 
 # dlopen wrapper library
 add_library(nethackdl STATIC "sys/unix/nledl.c")
@@ -215,6 +232,12 @@ target_link_libraries(_pynethack PUBLIC nle_common_options nethackdl)
 set_target_properties(_pynethack PROPERTIES CXX_STANDARD 14)
 target_include_directories(_pynethack PUBLIC ${NLE_INC_GEN})
 add_dependencies(_pynethack util) # For pm.h.
+if(NOT MSVC)
+  target_compile_options(
+    _pynethack
+    PRIVATE -Wno-catch-value -Wno-char-subscripts -Wno-deprecated-non-prototype
+            -Wno-sign-compare -Wno-unknown-warning-option)
+endif()
 
 # ttyrec converter library
 add_library(
@@ -226,7 +249,7 @@ target_include_directories(
          ${CMAKE_CURRENT_SOURCE_DIR}/third_party/converter ${bzip2_SOURCE_DIR})
 target_link_libraries(converter PUBLIC nle_common_options bz2_static tmt)
 if(CMAKE_BUILD_TYPE MATCHES Debug)
-  target_compile_options(converter PRIVATE -Wall -Wextra -pedantic -Werror)
+  target_compile_options(converter PRIVATE -Wextra -pedantic -Werror)
 endif()
 
 # ttyrec reader executable
@@ -240,6 +263,10 @@ target_link_libraries(_pyconverter PUBLIC nle_common_options converter)
 set_target_properties(_pyconverter PROPERTIES CXX_STANDARD 14)
 target_include_directories(
   _pyconverter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third_party/converter)
+if(NOT MSVC)
+  target_compile_options(_pyconverter PRIVATE -Wno-reorder -Wno-reorder-ctor
+                                              -Wno-sign-compare)
+endif()
 
 # Only install if we are building as part of a Python project.
 if(DEFINED SKBUILD_PROJECT_VERSION)

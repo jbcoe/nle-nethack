@@ -6,6 +6,8 @@ RUN apt-get update && apt-get install -yq \
     bash-completion \
     bison \
     build-essential \
+    clang \
+    cmake \
     curl \
     flex \
     git \

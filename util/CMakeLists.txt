@@ -49,6 +49,19 @@ target_include_directories(recover PRIVATE ${NLE_INC} ${NLE_INC_GEN}
                                            ${NLE_UTIL_GEN})
 target_link_libraries(recover PRIVATE nle_common_options)
 
+if(NOT MSVC)
+  target_compile_options(makedefs PRIVATE -Wall -Wno-unknown-warning-option
+                                          -Wno-deprecated-non-prototype)
+  target_compile_options(dgn_comp PRIVATE -Wall -Wno-unknown-warning-option
+                                          -Wno-deprecated-non-prototype)
+  target_compile_options(lev_comp PRIVATE -Wall -Wno-unknown-warning-option
+                                          -Wno-deprecated-non-prototype)
+  target_compile_options(dlb PRIVATE -Wall -Wno-unknown-warning-option
+                                     -Wno-deprecated-non-prototype)
+  target_compile_options(recover PRIVATE -Wall -Wno-unknown-warning-option
+                                         -Wno-deprecated-non-prototype)
+endif()
+
 add_custom_command(
   DEPENDS makedefs
   OUTPUT ${NLE_INC_GEN}/date.h
@@ -103,6 +116,13 @@ add_dependencies(tilemap util)
 add_library(tile OBJECT ${NLE_SRC_GEN}/tile.c)
 target_include_directories(tile PUBLIC ${NLE_INC} ${NLE_INC_GEN})
 target_link_libraries(tile PRIVATE nle_common_options)
+
+if(NOT MSVC)
+  target_compile_options(tilemap PRIVATE -Wall -Wno-unknown-warning-option
+                                         -Wno-deprecated-non-prototype)
+  target_compile_options(tile PRIVATE -Wall -Wno-unknown-warning-option
+                                      -Wno-deprecated-non-prototype)
+endif()
 
 # NOTE: util is dependent on these two
 add_dependencies(lev_comp util)
