@@ -2,6 +2,7 @@
     "name": "Nethack Learning Environment Dev Container",
     "build": {
         "dockerfile": "Dockerfile",
+        "target": "devcontainer",
         "context": ".."
     },
     "customizations": {

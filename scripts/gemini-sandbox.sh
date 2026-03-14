@@ -12,11 +12,11 @@ if [ -z "$GEMINI_API_KEY" ]; then
 fi
 
 IMAGE_NAME="nle-sandbox"
-DOCKERFILE="agents/Dockerfile"
+DOCKERFILE=".devcontainer/Dockerfile"
 
 # Build the image
 echo "--- Building Docker Sandbox: $IMAGE_NAME ---"
-docker build -t "$IMAGE_NAME" -f "$DOCKERFILE" .
+docker build -t "$IMAGE_NAME" --target agent -f "$DOCKERFILE" .
 
 # Run the container
 echo "--- Starting Sandboxed Gemini Session ---"

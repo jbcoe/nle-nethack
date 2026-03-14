@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.12-slim AS base
 
 # Install essential packages 
 RUN apt-get update && apt-get install -yq \
@@ -6,13 +6,16 @@ RUN apt-get update && apt-get install -yq \
     bash-completion \
     bison \
     build-essential \
+    clang \
+    cmake \
     curl \
     flex \
     git \
     libbz2-dev \
     ninja-build \
     sudo \
-    vim
+    vim \
+    gnupg
 
 # Create non-root user
 RUN useradd -m -s /bin/bash vscode \
@@ -31,3 +34,35 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Set up environment variables
 ENV PATH="/home/vscode/.local/bin:${PATH}"
+ENV UV_PROJECT_ENVIRONMENT="/home/vscode/.venv"
+ENV TERM="xterm-256color"
+ENV COLORTERM="truecolor"
+
+# --------------------------
+# Devcontainer target
+# --------------------------
+FROM base AS devcontainer
+# No additional steps required for standard devcontainer
+
+# --------------------------
+# Agent target
+# --------------------------
+FROM base AS agent
+
+# Switch back to root to install Node.js and Gemini CLI
+USER root
+
+# Install Node.js (required for Gemini CLI)
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs
+
+# Install Gemini CLI globally
+RUN npm install -g @google/gemini-cli
+
+# Switch back to non-root user
+USER vscode
+
+# Pre-configure Gemini CLI
+RUN mkdir -p /home/vscode/.gemini \
+    && echo '{"/workspace": "TRUST_FOLDER"}' > /home/vscode/.gemini/trustedFolders.json \
+    && echo '{"security": {"auth": {"selectedType": "gemini-api-key"}}}' > /home/vscode/.gemini/settings.json
