@@ -16,24 +16,51 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
   message("Debug build.")
   # Unclear if this is even necessary. `dsymutil rlmain -o rlmain.dSYM` seems to
   # have done the trick.
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
   set(CMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym")
 
-  if(0)
-    # address sanitizer.
-    set(CMAKE_CXX_FLAGS_DEBUG
-        "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
-    set(CMAKE_C_FLAGS_DEBUG
-        "${CMAKE_C_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
-    set(CMAKE_LINKER_FLAGS_DEBUG
-        "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address"
-    )
+  option(ENABLE_ASAN "Enable Address Sanitizer" OFF)
+  option(ENABLE_TSAN "Enable Thread Sanitizer" OFF)
+  option(ENABLE_UBSAN "Enable Undefined Behavior Sanitizer" OFF)
+
+  if(ENABLE_ASAN
+     OR ENABLE_TSAN
+     OR ENABLE_UBSAN)
+    include(CheckCXXCompilerFlag)
+    include(CheckCCompilerFlag)
+    add_library(nle_sanitizers INTERFACE)
+
+    if(ENABLE_ASAN)
+      set(SANITIZER_FLAGS_ASAN -fsanitize=address -fno-omit-frame-pointer)
+      check_cxx_compiler_flag("${SANITIZER_FLAGS_ASAN}" COMPILER_SUPPORTS_ASAN)
+      if(COMPILER_SUPPORTS_ASAN)
+        target_compile_options(nle_sanitizers INTERFACE ${SANITIZER_FLAGS_ASAN})
+        target_link_options(nle_sanitizers INTERFACE ${SANITIZER_FLAGS_ASAN})
+      endif()
+    endif()
+
+    if(ENABLE_TSAN)
+      set(SANITIZER_FLAGS_TSAN "-fsanitize=thread -fno-omit-frame-pointer")
+      check_cxx_compiler_flag("${SANITIZER_FLAGS_TSAN}" COMPILER_SUPPORTS_TSAN)
+      if(COMPILER_SUPPORTS_TSAN)
+        target_compile_options(nle_sanitizers INTERFACE ${SANITIZER_FLAGS_TSAN})
+        target_link_options(nle_sanitizers INTERFACE ${SANITIZER_FLAGS_TSAN})
+      endif()
+    endif()
+
+    if(ENABLE_UBSAN)
+      set(SANITIZER_FLAGS_UBSAN "-fsanitize=undefined -fno-omit-frame-pointer")
+      check_cxx_compiler_flag("${SANITIZER_FLAGS_UBSAN}"
+                              COMPILER_SUPPORTS_UBSAN)
+      if(COMPILER_SUPPORTS_UBSAN)
+        target_compile_options(nle_sanitizers
+                               INTERFACE ${SANITIZER_FLAGS_UBSAN})
+        target_link_options(nle_sanitizers INTERFACE ${SANITIZER_FLAGS_UBSAN})
+      endif()
+    endif()
+
+    link_libraries(nle_sanitizers)
   endif()
-  if(MSVC)
-    add_compile_options(/W4)
-  else()
-    add_compile_options(-Wall)
-  endif()
+
 elseif(CMAKE_BUILD_TYPE MATCHES Release)
   message("Release build.")
 else()
@@ -41,8 +68,6 @@ else()
 endif()
 
 message(STATUS "Building nle backend version: ${CMAKE_NLE_VERSION}")
-
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(HACKDIR
     "$ENV{HOME}/nethackdir.nle"
@@ -53,6 +78,28 @@ message(STATUS "HACKDIR set to: ${HACKDIR}")
 # Playground vars
 set(VARDIR ${HACKDIR})
 set(INSTDIR ${HACKDIR})
+
+add_library(nle_common_options INTERFACE)
+set_target_properties(nle_common_options
+                      PROPERTIES INTERFACE_POSITION_INDEPENDENT_CODE ON)
+
+target_compile_definitions(
+  nle_common_options
+  INTERFACE GCC_WARN
+            NOCLIPPING
+            NOMAIL
+            NOTPARMDECL
+            HACKDIR="${HACKDIR}"
+            DEFAULT_WINDOW_SYS="rl"
+            DLB
+            NOCWD_ASSUMPTIONS
+            NLE_USE_TILES)
+
+if(MSVC)
+  target_compile_options(nle_common_options INTERFACE /W4)
+else()
+  target_compile_options(nle_common_options INTERFACE -Wall)
+endif()
 
 # pybind11 via FetchContent
 include(FetchContent)
@@ -69,17 +116,6 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/septag/deboost.context.git
   GIT_HASH "259fc4103bad6bb484d5ff426ace56ac557107a4" EXCLUDE_FROM_ALL)
 FetchContent_MakeAvailable(deboost_context)
-
-add_compile_definitions(
-  GCC_WARN
-  NOCLIPPING
-  NOMAIL
-  NOTPARMDECL
-  HACKDIR="${HACKDIR}"
-  DEFAULT_WINDOW_SYS="rl"
-  DLB
-  NOCWD_ASSUMPTIONS
-  NLE_USE_TILES)
 
 set(NLE_SRC ${nle_SOURCE_DIR}/src)
 set(NLE_INC ${nle_SOURCE_DIR}/include)
@@ -149,19 +185,20 @@ target_include_directories(
 # Careful with -DMONITOR_HEAP: Ironically, it fails to fclose FILE* heaplog.
 # target_compile_definitions(nethack PUBLIC "$<$<CONFIG:DEBUG>:MONITOR_HEAP>")
 
-target_link_libraries(nethack PUBLIC m fcontext bz2_static tmt)
+target_link_libraries(nethack PUBLIC nle_common_options m fcontext bz2_static
+                                     tmt)
 
 # dlopen wrapper library
 add_library(nethackdl STATIC "sys/unix/nledl.c")
 target_include_directories(
   nethackdl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
                    ${deboost_context_SOURCE_DIR}/include)
-target_link_libraries(nethackdl PUBLIC dl)
+target_link_libraries(nethackdl PUBLIC nle_common_options dl)
 
 # rlmain C++ (test) binary
 add_executable(rlmain "sys/unix/rlmain.cc")
 set_target_properties(rlmain PROPERTIES CXX_STANDARD 11)
-target_link_libraries(rlmain PUBLIC nethackdl)
+target_link_libraries(rlmain PUBLIC nle_common_options nethackdl)
 target_include_directories(rlmain PUBLIC ${NLE_INC_GEN})
 add_dependencies(rlmain util) # For pm.h.
 
@@ -174,7 +211,7 @@ pybind11_add_module(
   src/drawing.c
   src/objects.c
   $<TARGET_OBJECTS:tile>)
-target_link_libraries(_pynethack PUBLIC nethackdl)
+target_link_libraries(_pynethack PUBLIC nle_common_options nethackdl)
 set_target_properties(_pynethack PROPERTIES CXX_STANDARD 14)
 target_include_directories(_pynethack PUBLIC ${NLE_INC_GEN})
 add_dependencies(_pynethack util) # For pm.h.
@@ -187,19 +224,19 @@ target_include_directories(
   converter
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third_party/libtmt
          ${CMAKE_CURRENT_SOURCE_DIR}/third_party/converter ${bzip2_SOURCE_DIR})
-target_link_libraries(converter PUBLIC bz2_static tmt)
+target_link_libraries(converter PUBLIC nle_common_options bz2_static tmt)
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   target_compile_options(converter PRIVATE -Wall -Wextra -pedantic -Werror)
 endif()
 
 # ttyrec reader executable
 add_executable(ttyrec_reader EXCLUDE_FROM_ALL "third_party/converter/reader.c")
-target_link_libraries(ttyrec_reader PUBLIC converter)
+target_link_libraries(ttyrec_reader PUBLIC nle_common_options converter)
 target_include_directories(
   ttyrec_reader PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third_party/converter)
 
 pybind11_add_module(_pyconverter third_party/converter/pyconverter.cc)
-target_link_libraries(_pyconverter PUBLIC converter)
+target_link_libraries(_pyconverter PUBLIC nle_common_options converter)
 set_target_properties(_pyconverter PROPERTIES CXX_STANDARD 14)
 target_include_directories(
   _pyconverter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third_party/converter)
