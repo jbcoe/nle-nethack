@@ -12,66 +12,28 @@ endif()
 string(REGEX MATCH "^[0-9]+(\\.[0-9]+)*" CMAKE_NLE_VERSION "${NLE_VERSION}")
 project(nle VERSION ${CMAKE_NLE_VERSION})
 
-if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
-  find_program(CCACHE_FOUND ccache)
-  if(CCACHE_FOUND)
-    message(STATUS "ccache found, enabling for C and C++")
-    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_FOUND}")
-    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_FOUND}")
-  else()
-    message(STATUS "ccache not found, proceeding without it")
-  endif()
-endif()
-
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   message("Debug build.")
   # Unclear if this is even necessary. `dsymutil rlmain -o rlmain.dSYM` seems to
   # have done the trick.
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
   set(CMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym")
 
-  option(ENABLE_ASAN "Enable Address Sanitizer" OFF)
-  option(ENABLE_TSAN "Enable Thread Sanitizer" OFF)
-  option(ENABLE_UBSAN "Enable Undefined Behavior Sanitizer" OFF)
-
-  if(ENABLE_ASAN
-     OR ENABLE_TSAN
-     OR ENABLE_UBSAN)
-    include(CheckCXXCompilerFlag)
-    include(CheckCCompilerFlag)
-    add_library(nle_sanitizers INTERFACE)
-
-    if(ENABLE_ASAN)
-      set(SANITIZER_FLAGS_ASAN -fsanitize=address -fno-omit-frame-pointer)
-      check_cxx_compiler_flag("${SANITIZER_FLAGS_ASAN}" COMPILER_SUPPORTS_ASAN)
-      if(COMPILER_SUPPORTS_ASAN)
-        target_compile_options(nle_sanitizers INTERFACE ${SANITIZER_FLAGS_ASAN})
-        target_link_options(nle_sanitizers INTERFACE ${SANITIZER_FLAGS_ASAN})
-      endif()
-    endif()
-
-    if(ENABLE_TSAN)
-      set(SANITIZER_FLAGS_TSAN "-fsanitize=thread -fno-omit-frame-pointer")
-      check_cxx_compiler_flag("${SANITIZER_FLAGS_TSAN}" COMPILER_SUPPORTS_TSAN)
-      if(COMPILER_SUPPORTS_TSAN)
-        target_compile_options(nle_sanitizers INTERFACE ${SANITIZER_FLAGS_TSAN})
-        target_link_options(nle_sanitizers INTERFACE ${SANITIZER_FLAGS_TSAN})
-      endif()
-    endif()
-
-    if(ENABLE_UBSAN)
-      set(SANITIZER_FLAGS_UBSAN "-fsanitize=undefined -fno-omit-frame-pointer")
-      check_cxx_compiler_flag("${SANITIZER_FLAGS_UBSAN}"
-                              COMPILER_SUPPORTS_UBSAN)
-      if(COMPILER_SUPPORTS_UBSAN)
-        target_compile_options(nle_sanitizers
-                               INTERFACE ${SANITIZER_FLAGS_UBSAN})
-        target_link_options(nle_sanitizers INTERFACE ${SANITIZER_FLAGS_UBSAN})
-      endif()
-    endif()
-
-    link_libraries(nle_sanitizers)
+  if(0)
+    # address sanitizer.
+    set(CMAKE_CXX_FLAGS_DEBUG
+        "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+    set(CMAKE_C_FLAGS_DEBUG
+        "${CMAKE_C_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+    set(CMAKE_LINKER_FLAGS_DEBUG
+        "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address"
+    )
   endif()
-
+  if(MSVC)
+    add_compile_options(/W4)
+  else()
+    add_compile_options(-Wall)
+  endif()
 elseif(CMAKE_BUILD_TYPE MATCHES Release)
   message("Release build.")
 else()
@@ -79,6 +41,11 @@ else()
 endif()
 
 message(STATUS "Building nle backend version: ${CMAKE_NLE_VERSION}")
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+add_compile_options(-Wno-deprecated-non-prototype)
+add_compile_options(-Wno-unused-variable)
 
 set(HACKDIR
     "$ENV{HOME}/nethackdir.nle"
@@ -90,28 +57,8 @@ message(STATUS "HACKDIR set to: ${HACKDIR}")
 set(VARDIR ${HACKDIR})
 set(INSTDIR ${HACKDIR})
 
-add_library(nle_common_options INTERFACE)
-set_target_properties(nle_common_options
-                      PROPERTIES INTERFACE_POSITION_INDEPENDENT_CODE ON)
-
-target_compile_definitions(
-  nle_common_options
-  INTERFACE GCC_WARN
-            NOCLIPPING
-            NOMAIL
-            NOTPARMDECL
-            HACKDIR="${HACKDIR}"
-            DEFAULT_WINDOW_SYS="rl"
-            DLB
-            NOCWD_ASSUMPTIONS
-            NLE_USE_TILES)
-
-if(MSVC)
-  add_compile_options(/W4)
-else()
-  add_compile_options(-Wall)
-endif()
-
+# Use FindPython in PyBind11 to find Python.
+set(PYBIND11_FINDPYTHON NEW)
 # pybind11 via FetchContent
 include(FetchContent)
 FetchContent_Declare(
@@ -120,6 +67,7 @@ FetchContent_Declare(
   GIT_TAG v3.0.1
   EXCLUDE_FROM_ALL)
 FetchContent_MakeAvailable(pybind11)
+message(STATUS "Python_EXECUTABLE is set to: ${Python_EXECUTABLE}")
 
 # de-boost-ified version of boost.context via FetchContent
 FetchContent_Declare(
@@ -127,6 +75,16 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/septag/deboost.context.git
   GIT_HASH "259fc4103bad6bb484d5ff426ace56ac557107a4" EXCLUDE_FROM_ALL)
 FetchContent_MakeAvailable(deboost_context)
+
+add_compile_definitions(
+  GCC_WARN
+  NOCLIPPING
+  NOMAIL
+  NOTPARMDECL
+  HACKDIR="${HACKDIR}"
+  DEFAULT_WINDOW_SYS="rl"
+  DLB
+  NOCWD_ASSUMPTIONS)
 
 set(NLE_SRC ${nle_SOURCE_DIR}/src)
 set(NLE_INC ${nle_SOURCE_DIR}/include)
@@ -182,14 +140,15 @@ target_include_directories(bz2_static PUBLIC ${bzip2_SOURCE_DIR})
 # terminal emulator library
 add_library(tmt STATIC "third_party/libtmt/tmt.c")
 set_target_properties(tmt PROPERTIES C_STANDARD 11)
-if(NOT MSVC)
-  target_compile_options(tmt PRIVATE -Wno-unused-function -Wno-unused-variable)
-endif()
 
 # libnethack library
 add_library(nethack SHARED ${NETHACK_SRC})
 add_dependencies(nethack util dat)
 set_target_properties(nethack PROPERTIES CXX_STANDARD 14 SUFFIX ".so")
+target_compile_options(
+  nethack
+  PRIVATE -Wno-deprecated-non-prototype
+  PRIVATE -Wno-unused-variable)
 target_include_directories(
   nethack
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${NLE_INC_GEN} /usr/local/include
@@ -199,34 +158,19 @@ target_include_directories(
 # Careful with -DMONITOR_HEAP: Ironically, it fails to fclose FILE* heaplog.
 # target_compile_definitions(nethack PUBLIC "$<$<CONFIG:DEBUG>:MONITOR_HEAP>")
 
-target_link_libraries(nethack PUBLIC nle_common_options m fcontext bz2_static
-                                     tmt)
-if(NOT MSVC)
-  target_compile_options(
-    nethack
-    PRIVATE -Wno-address
-            -Wno-deprecated-non-prototype
-            -Wno-format-overflow
-            -Wno-sign-compare
-            -Wno-stringop-truncation
-            -Wno-unknown-warning-option
-            -Wno-unused-but-set-variable
-            -Wno-unused-const-variable
-            -Wno-unused-function
-            -Wno-unused-variable)
-endif()
+target_link_libraries(nethack PUBLIC m fcontext bz2_static tmt)
 
 # dlopen wrapper library
 add_library(nethackdl STATIC "sys/unix/nledl.c")
 target_include_directories(
   nethackdl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
                    ${deboost_context_SOURCE_DIR}/include)
-target_link_libraries(nethackdl PUBLIC nle_common_options dl)
+target_link_libraries(nethackdl PUBLIC dl)
 
 # rlmain C++ (test) binary
 add_executable(rlmain "sys/unix/rlmain.cc")
 set_target_properties(rlmain PROPERTIES CXX_STANDARD 11)
-target_link_libraries(rlmain PUBLIC nle_common_options nethackdl)
+target_link_libraries(rlmain PUBLIC nethackdl)
 target_include_directories(rlmain PUBLIC ${NLE_INC_GEN})
 add_dependencies(rlmain util) # For pm.h.
 
@@ -239,16 +183,10 @@ pybind11_add_module(
   src/drawing.c
   src/objects.c
   $<TARGET_OBJECTS:tile>)
-target_link_libraries(_pynethack PUBLIC nle_common_options nethackdl)
+target_link_libraries(_pynethack PUBLIC nethackdl)
 set_target_properties(_pynethack PROPERTIES CXX_STANDARD 14)
-target_include_directories(_pynethack PUBLIC ${NLE_INC_GEN})
-add_dependencies(_pynethack util) # For pm.h.
-if(NOT MSVC)
-  target_compile_options(
-    _pynethack
-    PRIVATE -Wno-catch-value -Wno-char-subscripts -Wno-deprecated-non-prototype
-            -Wno-sign-compare -Wno-unknown-warning-option)
-endif()
+target_include_directories(_pynethack PUBLIC ${NLE_INC_GEN} ${NLE_WIN}/share)
+# add_dependencies(_pynethack util tile) # For pm.h.
 
 # ttyrec converter library
 add_library(
@@ -258,26 +196,54 @@ target_include_directories(
   converter
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third_party/libtmt
          ${CMAKE_CURRENT_SOURCE_DIR}/third_party/converter ${bzip2_SOURCE_DIR})
-target_link_libraries(converter PUBLIC nle_common_options bz2_static tmt)
+target_link_libraries(converter PUBLIC bz2_static tmt)
 if(CMAKE_BUILD_TYPE MATCHES Debug)
-  target_compile_options(converter PRIVATE -Wextra -pedantic -Werror)
+  target_compile_options(converter PRIVATE -Wall -Wextra -pedantic -Werror)
 endif()
 
 # ttyrec reader executable
 add_executable(ttyrec_reader EXCLUDE_FROM_ALL "third_party/converter/reader.c")
-target_link_libraries(ttyrec_reader PUBLIC nle_common_options converter)
+target_link_libraries(ttyrec_reader PUBLIC converter)
 target_include_directories(
   ttyrec_reader PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third_party/converter)
 
 pybind11_add_module(_pyconverter third_party/converter/pyconverter.cc)
-target_link_libraries(_pyconverter PUBLIC nle_common_options converter)
+target_link_libraries(_pyconverter PUBLIC converter)
 set_target_properties(_pyconverter PROPERTIES CXX_STANDARD 14)
 target_include_directories(
   _pyconverter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third_party/converter)
-if(NOT MSVC)
-  target_compile_options(_pyconverter PRIVATE -Wno-reorder -Wno-reorder-ctor
-                                              -Wno-sign-compare)
-endif()
+
+set(STUB_DIR ${CMAKE_CURRENT_BINARY_DIR}/stubs)
+set_directory_properties(PROPERTIES ADDITIONAL_CLEAN_FILES "${STUB_DIR}")
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/stubs/nle/_pyconverter.pyi
+  COMMAND ${Python_EXECUTABLE} -m pybind11_stubgen _pyconverter --output-dir
+          ${STUB_DIR}
+  WORKING_DIRECTORY $<TARGET_FILE_DIR:_pyconverter>
+  DEPENDS _pyconverter
+  COMMENT "Generating type stubs ..."
+  VERBATIM)
+
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/stubs/nle/_pynethack/__init__.pyi
+  COMMAND ${Python_EXECUTABLE} -m pybind11_stubgen _pynethack --output-dir
+          ${STUB_DIR} --ignore-unresolved-names game_end_types
+  WORKING_DIRECTORY $<TARGET_FILE_DIR:_pynethack>
+  DEPENDS _pynethack
+  COMMENT "Generating type stubs ..."
+  VERBATIM)
+
+add_custom_target(
+  my_module_stubs ALL
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/stubs/nle/_pynethack/__init__.pyi
+          ${CMAKE_CURRENT_BINARY_DIR}/stubs/nle/_pyconverter.pyi)
+
+file(TOUCH ${CMAKE_CURRENT_BINARY_DIR}/py.typed)
+
+set(TILE_FILES "win/share/monsters.txt" "win/share/objects.txt"
+               "win/share/other.txt")
+
+install(FILES ${TILE_FILES} DESTINATION ${INSTDIR}/tiles)
 
 # Only install if we are building as part of a Python project.
 if(DEFINED SKBUILD_PROJECT_VERSION)
@@ -286,4 +252,13 @@ if(DEFINED SKBUILD_PROJECT_VERSION)
     RUNTIME DESTINATION ${PYTHON_PACKAGE_NAME}
     LIBRARY DESTINATION ${PYTHON_PACKAGE_NAME}
     ARCHIVE DESTINATION ${PYTHON_PACKAGE_NAME})
+
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/py.typed
+          DESTINATION ${PYTHON_PACKAGE_NAME})
+
+  install(
+    DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/stubs/"
+    DESTINATION ${PYTHON_PACKAGE_NAME}
+    FILES_MATCHING
+    PATTERN "*.pyi")
 endif()

@@ -27,40 +27,18 @@ file(MAKE_DIRECTORY ${NLE_INC_GEN} ${NLE_SRC_GEN})
 add_executable(makedefs ${MAKEDEFS_SRC})
 target_include_directories(makedefs PRIVATE ${NLE_INC} ${NLE_INC_GEN}
                                             ${NLE_UTIL_GEN})
-target_link_libraries(makedefs PRIVATE nle_common_options)
-
 add_executable(dgn_comp ${DGN_COMP_SRC})
 target_include_directories(dgn_comp PRIVATE ${NLE_INC} ${NLE_INC_GEN}
                                             ${NLE_UTIL_GEN})
-target_link_libraries(dgn_comp PRIVATE nle_common_options)
-
 add_executable(lev_comp ${LEV_COMP_SRC})
 target_include_directories(lev_comp PRIVATE ${NLE_INC} ${NLE_INC_GEN}
                                             ${NLE_UTIL_GEN})
-target_link_libraries(lev_comp PRIVATE nle_common_options)
-
 add_executable(dlb ${DLB_SRC})
 target_include_directories(dlb PRIVATE ${NLE_INC} ${NLE_INC_GEN}
                                        ${NLE_UTIL_GEN})
-target_link_libraries(dlb PRIVATE nle_common_options)
-
 add_executable(recover recover.c)
 target_include_directories(recover PRIVATE ${NLE_INC} ${NLE_INC_GEN}
                                            ${NLE_UTIL_GEN})
-target_link_libraries(recover PRIVATE nle_common_options)
-
-if(NOT MSVC)
-  target_compile_options(makedefs PRIVATE -Wall -Wno-unknown-warning-option
-                                          -Wno-deprecated-non-prototype)
-  target_compile_options(dgn_comp PRIVATE -Wall -Wno-unknown-warning-option
-                                          -Wno-deprecated-non-prototype)
-  target_compile_options(lev_comp PRIVATE -Wall -Wno-unknown-warning-option
-                                          -Wno-deprecated-non-prototype)
-  target_compile_options(dlb PRIVATE -Wall -Wno-unknown-warning-option
-                                     -Wno-deprecated-non-prototype)
-  target_compile_options(recover PRIVATE -Wall -Wno-unknown-warning-option
-                                         -Wno-deprecated-non-prototype)
-endif()
 
 add_custom_command(
   DEPENDS makedefs
@@ -76,11 +54,13 @@ add_custom_command(
   DEPENDS makedefs
   OUTPUT ${NLE_INC_GEN}/pm.h
   COMMAND $<TARGET_FILE:makedefs> ARGS -p)
+add_custom_target(generate_pm_h DEPENDS ${NLE_INC_GEN}/pm.h)
 
 add_custom_command(
   DEPENDS tilemap
   OUTPUT ${NLE_SRC_GEN}/tile.c
   COMMAND $<TARGET_FILE:tilemap>)
+add_custom_target(generate_tile_c DEPENDS ${NLE_SRC_GEN}/tile.c)
 
 add_custom_command(
   OUTPUT ${NLE_UTIL_GEN}/dgn_parser.c ${NLE_UTIL_GEN}/dgn_comp.h
@@ -110,19 +90,14 @@ add_custom_target(util DEPENDS ${MAKEDEFS_HEADERS} recover)
 
 add_executable(tilemap ${NLE_WIN}/share/tilemap.c)
 target_include_directories(tilemap PUBLIC ${NLE_INC} ${NLE_INC_GEN})
-target_link_libraries(tilemap PRIVATE nle_common_options)
 add_dependencies(tilemap util)
 
-add_library(tile OBJECT ${NLE_SRC_GEN}/tile.c)
-target_include_directories(tile PUBLIC ${NLE_INC} ${NLE_INC_GEN})
-target_link_libraries(tile PRIVATE nle_common_options)
-
-if(NOT MSVC)
-  target_compile_options(tilemap PRIVATE -Wall -Wno-unknown-warning-option
-                                         -Wno-deprecated-non-prototype)
-  target_compile_options(tile PRIVATE -Wall -Wno-unknown-warning-option
-                                      -Wno-deprecated-non-prototype)
-endif()
+file(GLOB NETHACK_TILE_SRC ${NLE_WIN}/rl/tile2rgb.c ${NLE_WIN}/rl/nletiletxt.c
+     ${NLE_WIN}/share/tiletext.c)
+add_library(tile OBJECT ${NETHACK_TILE_SRC} ${NLE_SRC_GEN}/tile.c)
+target_include_directories(tile PUBLIC ${NLE_INC} ${NLE_INC_GEN}
+                                       ${NLE_WIN}/share)
+add_dependencies(tile generate_pm_h generate_tile_c)
 
 # NOTE: util is dependent on these two
 add_dependencies(lev_comp util)
