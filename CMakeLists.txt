@@ -213,38 +213,10 @@ set_target_properties(_pyconverter PROPERTIES CXX_STANDARD 14)
 target_include_directories(
   _pyconverter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third_party/converter)
 
-set(STUB_DIR ${CMAKE_CURRENT_BINARY_DIR}/stubs)
-set_directory_properties(PROPERTIES ADDITIONAL_CLEAN_FILES "${STUB_DIR}")
-add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/stubs/nle/_pyconverter.pyi
-  COMMAND ${Python_EXECUTABLE} -m pybind11_stubgen _pyconverter --output-dir
-          ${STUB_DIR}
-  WORKING_DIRECTORY $<TARGET_FILE_DIR:_pyconverter>
-  DEPENDS _pyconverter
-  COMMENT "Generating type stubs ..."
-  VERBATIM)
-
-add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/stubs/nle/_pynethack/__init__.pyi
-  COMMAND ${Python_EXECUTABLE} -m pybind11_stubgen _pynethack --output-dir
-          ${STUB_DIR} --ignore-unresolved-names game_end_types
-  WORKING_DIRECTORY $<TARGET_FILE_DIR:_pynethack>
-  DEPENDS _pynethack
-  COMMENT "Generating type stubs ..."
-  VERBATIM)
-
-add_custom_target(
-  my_module_stubs ALL
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/stubs/nle/_pynethack/__init__.pyi
-          ${CMAKE_CURRENT_BINARY_DIR}/stubs/nle/_pyconverter.pyi)
-
-file(TOUCH ${CMAKE_CURRENT_BINARY_DIR}/py.typed)
-
 set(TILE_FILES "win/share/monsters.txt" "win/share/objects.txt"
                "win/share/other.txt")
 
 install(FILES ${TILE_FILES} DESTINATION ${INSTDIR}/tiles)
-
 # Only install if we are building as part of a Python project.
 if(DEFINED SKBUILD_PROJECT_VERSION)
   install(
