@@ -13,21 +13,27 @@
 namespace py = pybind11;
 using namespace py::literals;
 
+// Use an anonymous namespace to force internal linkage.
+namespace {
+
 // adapted from pynethack.cc
 template <typename T>
 T *
 checked_conversion(py::handle h, const std::vector<size_t> &shape)
 {
-    if (h.is_none())
+    if (h.is_none()) {
         return nullptr;
-    if (!py::isinstance<py::array>(h))
+}
+    if (!py::isinstance<py::array>(h)) {
         throw std::invalid_argument("Numpy array required");
+}
 
     py::array array = py::array::ensure(h);
     // We don't use py::array_t<T> (or <T, 0>) above as that still
     // causes conversions to "larger" types.
-    if (!array.dtype().is(py::dtype::of<T>()))
+    if (!array.dtype().is(py::dtype::of<T>())) {
         throw std::invalid_argument("Buffer dtype mismatch.");
+}
 
     py::buffer_info buf = array.request();
 
@@ -40,16 +46,19 @@ checked_conversion(py::handle h, const std::vector<size_t> &shape)
     if (!std::equal(shape.begin(), shape.end(), buf.shape.begin())) {
         std::ostringstream ss;
         ss << "Array has wrong shape (expected [ ";
-        for (auto i : shape)
+        for (auto i : shape) {
             ss << i << " ";
+}
         ss << "], got [ ";
-        for (auto i : buf.shape)
+        for (auto i : buf.shape) {
             ss << i << " ";
+}
         ss << "])";
         throw std::invalid_argument(ss.str());
     }
-    if (!(array.flags() & py::array::c_style))
+    if (!(array.flags() & py::array::c_style)) {
         throw std::invalid_argument("Array isn't C contiguous");
+}
 
     return static_cast<T *>(buf.ptr);
 }
@@ -65,8 +74,9 @@ class Converter
           term_rows_((term_rows != 0) ? term_rows : rows),
           term_cols_((term_cols != 0) ? term_cols : cols)          
     {
-        if (term_rows_ < 2 || term_cols_ < 2)
+        if (term_rows_ < 2 || term_cols_ < 2) {
            throw std::invalid_argument("Terminal invalid: term_rows and term_cols must be >1");
+}
 
         conversion_ = conversion_create(rows_, cols_, term_rows_, term_cols_,
                                         ttyrec_version_);
@@ -86,10 +96,11 @@ class Converter
     void
     load_ttyrec(const std::string filename, size_t gameid, size_t part)
     {
-        if (ttyrec_ == nullptr)
+        if (ttyrec_ == nullptr) {
             ttyrec_ = fopen(filename.c_str(), "r");
-        else
+        } else {
             ttyrec_ = freopen(filename.c_str(), "r", ttyrec_);
+}
         if (ttyrec_ == nullptr) {
             PyErr_SetFromErrnoWithFilename(PyExc_OSError, filename.c_str());
             throw py::error_already_set();
@@ -112,11 +123,13 @@ class Converter
     {
         int status = 0;
 
-        if (!py::isinstance<py::array>(chars))
+        if (!py::isinstance<py::array>(chars)) {
             throw std::invalid_argument("Numpy array required");
+}
         py::array array = py::array::ensure(chars);
-        if (!array.dtype().is(py::dtype::of<uint8_t>()))
+        if (!array.dtype().is(py::dtype::of<uint8_t>())) {
             throw std::invalid_argument("Buffer dtype mismatch.");
+}
         size_t unroll = array.request().shape[0];
 
         conversion_set_buffers(
@@ -184,6 +197,8 @@ class Converter
     size_t part_ = 0;
     size_t gameid_ = 0;
 };
+
+} // namespace
 
 PYBIND11_MODULE(_pyconverter, m)
 {

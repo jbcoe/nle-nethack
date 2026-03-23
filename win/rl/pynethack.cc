@@ -59,20 +59,26 @@ on_level(d_level *lev1, d_level *lev2)
 namespace py = pybind11;
 using namespace py::literals;
 
+// Use an anonymous namespace to force internal linkage.
+namespace {
+
 template <typename T>
 T *
 checked_conversion(py::handle h, const std::vector<ssize_t> &shape)
 {
-    if (h.is_none())
+    if (h.is_none()) {
         return nullptr;
-    if (!py::isinstance<py::array>(h))
+}
+    if (!py::isinstance<py::array>(h)) {
         throw std::invalid_argument("Numpy array required");
+}
 
     py::array array = py::array::ensure(h);
     // We don't use py::array_t<T> (or <T, 0>) above as that still
     // causes conversions to "larger" types.
-    if (!array.dtype().is(py::dtype::of<T>()))
+    if (!array.dtype().is(py::dtype::of<T>())) {
         throw std::invalid_argument("Buffer dtype mismatch.");
+}
 
     py::buffer_info buf = array.request();
 
@@ -85,16 +91,19 @@ checked_conversion(py::handle h, const std::vector<ssize_t> &shape)
     if (!std::equal(shape.begin(), shape.end(), buf.shape.begin())) {
         std::ostringstream ss;
         ss << "Array has wrong shape (expected [ ";
-        for (auto i : shape)
+        for (auto i : shape) {
             ss << i << " ";
+}
         ss << "], got [ ";
-        for (auto i : buf.shape)
+        for (auto i : buf.shape) {
             ss << i << " ";
+}
         ss << "])";
         throw std::invalid_argument(ss.str());
     }
-    if (!(array.flags() & py::array::c_style))
+    if (!(array.flags() & py::array::c_style)) {
         throw std::invalid_argument("Array isn't C contiguous");
+}
 
     return static_cast<T *>(buf.ptr);
 }
@@ -124,9 +133,10 @@ class Nethack
         strncpy(settings_.scoreprefix, scoreprefix.c_str(),
                 scoreprefix.length());
         std::size_t found = ttyrec.rfind("/");
-        if (found != std::string::npos && found + 1 < ttyrec.length())
+        if (found != std::string::npos && found + 1 < ttyrec.length()) {
             strncpy(settings_.ttyrecname, &ttyrec.c_str()[found + 1],
                     ttyrec.length() - found - 1);
+}
 
         settings_.initial_seeds.use_init_seeds = false;
         settings_.initial_seeds.use_lgen_seed = false;
@@ -164,10 +174,12 @@ class Nethack
     void
     step(int action)
     {
-        if (!nle_)
+        if (!nle_) {
             throw std::runtime_error("step called without reset()");
-        if (obs_.done)
+}
+        if (obs_.done) {
             throw std::runtime_error("Called step on finished NetHack");
+}
         obs_.action = action;
         nle_ = nle_step(nle_, &obs_);
     }
@@ -194,9 +206,10 @@ class Nethack
         }
 
         std::size_t found = ttyrec.rfind("/");
-        if (found != std::string::npos && (found + 1) < ttyrec.length())
+        if (found != std::string::npos && (found + 1) < ttyrec.length()) {
             strncpy(settings_.ttyrecname, &ttyrec.c_str()[found + 1],
                     ttyrec.length() - found - 1);
+}
 
         // Reset environment, then close original FILE. Cannot use freopen
         // as the game may still need to write to the original file but
@@ -217,8 +230,9 @@ class Nethack
                 py::object screen_descriptions, py::object tty_chars,
                 py::object tty_colors, py::object tty_cursor, py::object misc)
     {
-        if (nle_)
+        if (nle_) {
             throw std::runtime_error("set_buffers called after reset()");
+}
 
         std::vector<ssize_t> dungeon{ ROWNO, COLNO - 1 };
         obs_.glyphs = checked_conversion<int16_t>(glyphs, dungeon);
@@ -229,7 +243,7 @@ class Nethack
             checked_conversion<long>(blstats, { NLE_BLSTATS_SIZE });
         obs_.message = checked_conversion<uint8_t>(message, { 256 });
         obs_.program_state = checked_conversion<int>(
-            std::move(program_state), { NLE_PROGRAM_STATE_SIZE });
+            program_state, { NLE_PROGRAM_STATE_SIZE });
         obs_.internal =
             checked_conversion<int>(internal, { NLE_INTERNAL_SIZE });
         obs_.inv_glyphs =
@@ -284,7 +298,7 @@ class Nethack
     {
         settings_.initial_seeds.seeds[0] = core;
         settings_.initial_seeds.seeds[1] = disp;
-        settings_.initial_seeds.reseed = reseed;
+        settings_.initial_seeds.reseed = reseed ? 1 : 0;
         settings_.initial_seeds.use_init_seeds = true;
 
         /* The level generation seed's optional so may be passed as a Python
@@ -293,7 +307,7 @@ class Nethack
         try {
             settings_.initial_seeds.lgen_seed = pyLgen.cast<unsigned long>();
             settings_.initial_seeds.use_lgen_seed = true;
-        } catch (py::cast_error) {
+        } catch (const py::cast_error&) {
             settings_.initial_seeds.lgen_seed = 0;
             settings_.initial_seeds.use_lgen_seed = false;
         }
@@ -303,25 +317,27 @@ class Nethack
     set_seeds(unsigned long core, unsigned long disp, bool reseed,
               py::object pyLgen)
     {
-        if (!nle_)
+        if (!nle_) {
             throw std::runtime_error("set_seed called without reset()");
+        }
 
         unsigned long lgen;
         try {
             lgen = pyLgen.cast<unsigned long>();
-        } catch (py::cast_error) {
+        } catch (const py::cast_error&) {
             /* Is 0 a valid seed number? Does nothing even matter?
                A philosophical question for another day and time. */
             lgen = 0;
         }
-        nle_set_seed(nle_, core, disp, reseed, lgen);
+        nle_set_seed(nle_, core, disp, reseed ? 1 : 0, lgen);
     }
 
     std::tuple<unsigned long, unsigned long, bool, py::object>
     get_seeds()
     {
-        if (!nle_)
+        if (!nle_) {
             throw std::runtime_error("get_seed called without reset()");
+}
 
         std::tuple<unsigned long, unsigned long, bool, unsigned long, bool>
             result;
@@ -439,7 +455,7 @@ class Nethack
                                      "has not been initialized.");
         }
 
-        auto buffer = checked_conversion<uint8_t>(
+        auto* buffer = checked_conversion<uint8_t>(
             frame, { ROWNO * TILE_Y, (COLNO - 1) * TILE_X, TILE_Z });
 
         int frame_width = (COLNO - 1) * TILE_X * TILE_Z;
@@ -464,7 +480,7 @@ class Nethack
                 if (tile_index < 0 || tile_index >= total_tiles_used) {
                     fprintf(stderr,
                             "Invalid tile index %d for glyph %d at position "
-                            "(%ld,%ld)\n",
+                            "(%d,%d)\n",
                             tile_index, glyph, tile_row, tile_col);
                     continue;
                 }
@@ -493,14 +509,16 @@ class Nethack
     {
         py::gil_scoped_release gil;
 
-        if (!ttyrec)
+        if (!ttyrec) {
             strncpy(settings_.ttyrecname, "", sizeof(settings_.ttyrecname));
+}
 
         if (!nle_) {
             nle_ = nle_start(dlpath_.c_str(), &obs_,
                              ttyrec ? ttyrec : ttyrec_, &settings_);
-        } else
+        } else {
             nle_reset(nle_, &obs_, ttyrec, &settings_);
+}
 
         /* Once the seeds have been used, prevent them being reused. */
         settings_.initial_seeds.use_init_seeds = false;
@@ -512,8 +530,9 @@ class Nethack
             std::fill(std::begin(prev_glyphs), std::end(prev_glyphs), 0);
         }
 
-        if (obs_.done)
+        if (obs_.done) {
             throw std::runtime_error("NetHack done right after reset");
+}
     }
 
     std::string dlpath_;
@@ -525,6 +544,8 @@ class Nethack
     tile_t *tileset = nullptr;
     short prev_glyphs[ROWNO * (COLNO - 1)] = { 0 };
 };
+
+} // namespace
 
 PYBIND11_MODULE(_pynethack, m)
 {
@@ -778,11 +799,12 @@ PYBIND11_MODULE(_pynethack, m)
             "__init__",
             // See https://github.com/pybind/pybind11/issues/2394
             [](py::detail::value_and_holder &v_h, int index) {
-                if (index < 0 || index >= NUMMONS)
+                if (index < 0 || index >= NUMMONS) {
                     throw std::out_of_range(
                         "Index should be between 0 and NUMMONS ("
                         + std::to_string(NUMMONS) + ") but got "
                         + std::to_string(index));
+}
                 v_h.value_ptr() = &mons[index];
                 v_h.inst->owned = false;
                 v_h.set_holder_constructed(true);
@@ -825,22 +847,24 @@ PYBIND11_MODULE(_pynethack, m)
         .def_static(
             "from_mlet",
             [](char let) -> const class_sym * {
-                if (let < 0 || let >= MAXMCLASSES)
+                if (let < 0 || let >= MAXMCLASSES) {
                     throw std::out_of_range(
                         "Argument should be between 0 and MAXMCLASSES ("
                         + std::to_string(MAXMCLASSES) + ") but got "
                         + std::to_string(let));
+}
                 return &def_monsyms[(int) let];
             },
             py::return_value_policy::reference)
         .def_static(
             "from_oc_class",
             [](char olet) -> const class_sym * {
-                if (olet < 0 || olet >= MAXOCLASSES)
+                if (olet < 0 || olet >= MAXOCLASSES) {
                     throw std::out_of_range(
                         "Argument should be between 0 and MAXOCLASSES ("
                         + std::to_string(MAXOCLASSES) + ") but got "
                         + std::to_string(olet));
+}
                 return &def_oc_syms[(int) olet];
             },
             py::return_value_policy::reference)
@@ -879,11 +903,12 @@ PYBIND11_MODULE(_pynethack, m)
             "__init__",
             // See https://github.com/pybind/pybind11/issues/2394
             [](py::detail::value_and_holder &v_h, int i) {
-                if (i < 0 || i >= NUM_OBJECTS)
+                if (i < 0 || i >= NUM_OBJECTS) {
                     throw std::out_of_range(
                         "Index should be between 0 and NUM_OBJECTS ("
                         + std::to_string(NUM_OBJECTS) + ") but got "
                         + std::to_string(i));
+}
 
                 /* Initialize. Cannot depend on o_init.c as it pulls
                  * in all kinds of other code. Instead, do what
@@ -891,7 +916,7 @@ PYBIND11_MODULE(_pynethack, m)
                  * Alternative: Get the pointer from the game itself?
                  * Dangerous!
                  */
-                objects[i].oc_name_idx = objects[i].oc_descr_idx = i;
+                objects[i].oc_name_idx = objects[i].oc_descr_idx = static_cast<short>(i);
 
                 v_h.value_ptr() = &objects[i];
                 v_h.inst->owned = false;
@@ -929,11 +954,12 @@ PYBIND11_MODULE(_pynethack, m)
         .def_static(
             "from_idx",
             [](int idx) -> const objdescr * {
-                if (idx < 0 || idx >= NUM_OBJECTS)
+                if (idx < 0 || idx >= NUM_OBJECTS) {
                     throw std::out_of_range(
                         "Argument should be between 0 and NUM_OBJECTS ("
                         + std::to_string(NUM_OBJECTS) + ") but got "
                         + std::to_string(idx));
+}
                 return &obj_descr[idx];
             },
             py::return_value_policy::reference)
@@ -954,11 +980,12 @@ PYBIND11_MODULE(_pynethack, m)
         .def_static(
             "from_idx",
             [](int idx) -> const symdef * {
-                if (idx < 0 || idx >= MAXPCHARS)
+                if (idx < 0 || idx >= MAXPCHARS) {
                     throw std::out_of_range(
                         "Argument should be between 0 and MAXPCHARS ("
                         + std::to_string(MAXPCHARS) + ") but got "
                         + std::to_string(idx));
+}
                 return &defsyms[idx];
             },
             py::return_value_policy::reference)
